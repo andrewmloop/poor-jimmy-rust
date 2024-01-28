@@ -1,0 +1,33 @@
+[package]
+name = "poor-jimmy"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenv = "0.15.0"
+reqwest = {}
+
+[dependencies.songbird]
+version = "0.3.2"
+features = ["builtin-queue", "yt-dlp"]
+
+[dependencies.serenity]
+version = "0.11.7"
+default_features = false
+features = [
+  "builder",
+  "cache",
+  "collector",
+  "client",
+  "gateway",
+  "model",
+  "rustls_backend",
+  "unstable_discord_api",
+  "voice",
+]
+
+[dependencies.tokio]
+version = "1.17.0"
+features = ["macros", "rt-multi-thread"]
