@@ -15,7 +15,7 @@ pub fn run(command: &ApplicationCommandInteraction) -> CommandResponse {
     println!("Ping! From guild id: {guild_id}");
 
     CommandResponse::new()
-        .description("Pong!")
+        .description(String::from("Pong!"))
         .color(Color::DARK_GREEN)
         .clone()
 }

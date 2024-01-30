@@ -30,7 +30,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
                 println!("Error finding guild in cache");
                 println!("{:?}", ctx.cache);
                 response = CommandResponse::new()
-                    .description("Error joining voice channel")
+                    .description(String::from("Error joining voice channel"))
                     .color(Color::DARK_RED)
                     .clone();
 
@@ -49,7 +49,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         Some(channel) => channel,
         None => {
             response = CommandResponse::new()
-                .description("You're not in a voice channel!")
+                .description(String::from("You're not in a voice channel!"))
                 .color(Color::DARK_RED)
                 .clone();
 
@@ -65,12 +65,12 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 
     if let Ok(_channel) = success {
         response = CommandResponse::new()
-            .description("Poor Jimmy joined the voice channel")
+            .description(String::from("Poor Jimmy joined the voice channel"))
             .color(Color::DARK_GREEN)
             .clone();
     } else {
         response = CommandResponse::new()
-            .description("Error joining voice channel")
+            .description(String::from("Error joining voice channel"))
             .color(Color::DARK_RED)
             .clone();
 
