@@ -5,7 +5,7 @@ use serenity::utils::Color;
 /// E.g. calculating the color of the response embed depending on whether the result was a sucesss.
 #[derive(Clone, Default)]
 pub struct CommandResponse {
-    description: &'static str,
+    description: String,
     color: Color,
 }
 
@@ -14,7 +14,7 @@ impl CommandResponse {
         CommandResponse::default()
     }
 
-    pub fn description(&mut self, description: &'static str) -> &mut Self {
+    pub fn description(&mut self, description: String) -> &mut Self {
         self.description = description;
         self
     }
@@ -28,7 +28,7 @@ impl CommandResponse {
         self.color
     }
 
-    pub fn get_description(&self) -> &'static str {
-        self.description
+    pub fn get_description(&self) -> String {
+        self.description.to_owned()
     }
 }

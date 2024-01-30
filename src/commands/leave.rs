@@ -24,12 +24,12 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 
     if let Ok(_) = manager.leave(guild_id).await {
         response = CommandResponse::new()
-            .description("Poor Jimmy left the voice channel")
+            .description(String::from("Poor Jimmy left the voice channel"))
             .color(Color::DARK_GREEN)
             .clone();
     } else {
         response = CommandResponse::new()
-            .description("Error leaving voice channel")
+            .description(String::from("Error leaving voice channel"))
             .color(Color::DARK_RED)
             .clone();
 

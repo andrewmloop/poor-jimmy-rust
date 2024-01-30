@@ -32,7 +32,7 @@ impl EventHandler for Handler {
                 "play" => Some(commands::play::run(&ctx, &command).await),
                 _ => {
                     let response = CommandResponse::new()
-                        .description("Unknown command!")
+                        .description(String::from("Unknown command!"))
                         .color(Color::DARK_RED)
                         .clone();
 
