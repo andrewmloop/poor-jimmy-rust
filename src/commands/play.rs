@@ -1,4 +1,4 @@
-use std::{fmt::format, sync::Arc};
+use std::sync::Arc;
 
 use serenity::{
     async_trait,
@@ -69,11 +69,15 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
     let guild_id = command.guild_id.unwrap();
     println!("Play command guild id: {guild_id}");
 
-    // let http_client = get_http_client(&ctx).await;
-
     // Grab the active Call for the command's guild
     if let Some(call) = manager.get(guild_id) {
         let mut handler = call.lock().await;
+
+        // If a song is currently playing, we'll add the new song to the queue
+        let should_enqueue = match handler.queue().current() {
+            Some(_) => true,
+            None => false,
+        };
 
         // Get the audio source for the URL
         let source = input::ytdl(string_option)
@@ -83,22 +87,25 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         let source_metadata = source.metadata.clone();
         let source_title = match source_metadata.title {
             Some(title) => title,
-            None => String::from("song"),
+            None => String::from("Song"),
         };
 
+        // Play/enqueue song
         let song = handler.enqueue_source(source);
         let send_http = ctx.http.clone();
         let channel_id = command.channel_id;
 
+        // Add an event to play once song finishes
         let _ = song.add_event(
             Event::Track(TrackEvent::End),
             SongEndNotifier {
                 channel_id,
                 http: send_http,
+                song_title: source_title.clone(),
             },
         );
 
-        let response_description = format!("Playing {}!", source_title);
+        let response_description = format_description(source_title, should_enqueue);
 
         response = CommandResponse::new()
             .description(response_description)
@@ -117,6 +124,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 struct SongEndNotifier {
     channel_id: ChannelId,
     http: Arc<Http>,
+    song_title: String,
 }
 
 #[async_trait]
@@ -125,7 +133,11 @@ impl VoiceEventHandler for SongEndNotifier {
         let _ = self
             .channel_id
             .send_message(&self.http, |message| {
-                message.add_embed(|embed| embed.description("Song ended!").color(Color::DARK_GREEN))
+                message.add_embed(|embed| {
+                    embed
+                        .description(format!("{} **ended!**", self.song_title))
+                        .color(Color::DARK_GREEN)
+                })
             })
             .await;
 
@@ -144,4 +156,12 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 .kind(CommandOptionType::String)
                 .required(true)
         })
+}
+
+fn format_description(source_title: String, should_enqueue: bool) -> String {
+    if should_enqueue {
+        return format!("**Queued** {}!", source_title);
+    } else {
+        return format!("**Playing** {}!", source_title);
+    }
 }
