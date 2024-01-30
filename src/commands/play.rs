@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-// use reqwest::Client as HttpClient;
+use std::{fmt::format, sync::Arc};
 
 use serenity::{
     async_trait,
@@ -45,7 +43,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         CommandDataOptionValue::String(option) => option,
         _ => {
             response = CommandResponse::new()
-                .description("Please provide a valid Youtube URL")
+                .description(String::from("Please provide a valid Youtube URL"))
                 .color(Color::DARK_RED)
                 .clone();
 
@@ -56,7 +54,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
     // Validate its a valid Youtube URL
     if !string_option.contains("youtube.com/watch") {
         response = CommandResponse::new()
-            .description("Please provide a valid Youtube URL")
+            .description(String::from("Please provide a valid Youtube URL"))
             .color(Color::DARK_RED)
             .clone();
 
@@ -81,7 +79,14 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         let source = input::ytdl(string_option)
             .await
             .expect("Failure grabbing Youtube URL source");
-        let song = handler.play_source(source);
+
+        let source_metadata = source.metadata.clone();
+        let source_title = match source_metadata.title {
+            Some(title) => title,
+            None => String::from("song"),
+        };
+
+        let song = handler.enqueue_source(source);
         let send_http = ctx.http.clone();
         let channel_id = command.channel_id;
 
@@ -93,27 +98,21 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
             },
         );
 
+        let response_description = format!("Playing {}!", source_title);
+
         response = CommandResponse::new()
-            .description("Playing song!")
+            .description(response_description)
             .color(Color::DARK_GREEN)
             .clone();
     } else {
         response = CommandResponse::new()
-            .description("Error playing song")
+            .description(String::from("Error playing song"))
             .color(Color::DARK_RED)
             .clone();
     }
 
     response
 }
-
-// async fn get_http_client(ctx: &Context) -> HttpClient {
-//     let data = ctx.data.read().await;
-
-//     data.get::<HttpKey>()
-//         .cloned()
-//         .expect("Error grabbing http client off context")
-// }
 
 struct SongEndNotifier {
     channel_id: ChannelId,
