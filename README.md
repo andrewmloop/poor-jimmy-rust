@@ -20,6 +20,16 @@ The main objectives of this project are:
 - [Rust](https://www.rust-lang.org/tools/install): Ensure that Rust is installed on your system.
 - [Docker](https://www.docker.com/get-started): Docker is used for containerization.
 
+### Configuration
+
+1. Create a `.env` file in the project directory with the following content:
+
+   ```bash
+   DISCORD_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
+   ```
+
+   Replace `YOUR_DISCORD_BOT_TOKEN` with your actual Discord bot token.
+
 ### Installation
 
 1. Clone the repository:
@@ -40,16 +50,6 @@ The main objectives of this project are:
    ```bash
    docker run -d --name poor-jimmy poor-jimmy
    ```
-
-### Configuration
-
-1. Create a `.env` file in the project directory with the following content:
-
-   ```bash
-   DISCORD_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
-   ```
-
-   Replace `YOUR_DISCORD_BOT_TOKEN` with your actual Discord bot token.
 
 ### Usage
 
