@@ -3,6 +3,7 @@ use serenity::{
     model::application::interaction::application_command::ApplicationCommandInteraction,
     utils::Color,
 };
+use songbird::tracks::PlayMode;
 
 use crate::utils::result::CommandResponse;
 
@@ -20,9 +21,23 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
     if let Some(call) = manager.get(guild_id) {
         let handler = call.lock().await;
 
-        // Attempt to pause the currently playing song
-        let pause_result = match handler.queue().current() {
-            Some(track) => track.pause(),
+        // Grab the currrently playing song
+        let current_song = handler.queue().current();
+
+        // Attempt to grab the current play state of the current song
+        let song_state = match &current_song {
+            Some(track) => match track.get_info().await {
+                Ok(state) => state.playing,
+                Err(why) => {
+                    println!("Error getting song state: {why}");
+                    response = CommandResponse::new()
+                        .description(String::from("Error pausing song!"))
+                        .color(Color::DARK_RED)
+                        .clone();
+
+                    return response;
+                }
+            },
             None => {
                 response = CommandResponse::new()
                     .description(String::from("There is no song to pause!"))
@@ -33,17 +48,34 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
             }
         };
 
-        match pause_result {
-            Ok(_) => {
+        // If the song is playing, pause it
+        match song_state {
+            PlayMode::Play => match current_song {
+                Some(song) => match song.pause() {
+                    Ok(_) => {
+                        response = CommandResponse::new()
+                            .description(String::from("Song **paused!**"))
+                            .color(Color::DARK_GREEN)
+                            .clone();
+                    }
+                    Err(why) => {
+                        println!("Error resuming song: {why}");
+                        response = CommandResponse::new()
+                            .description(String::from("Error pausing song!"))
+                            .color(Color::DARK_RED)
+                            .clone();
+                    }
+                },
+                None => {
+                    response = CommandResponse::new()
+                        .description(String::from("There is nothing to pause!"))
+                        .color(Color::DARK_RED)
+                        .clone();
+                }
+            },
+            _ => {
                 response = CommandResponse::new()
-                    .description(String::from("Song **paused!**"))
-                    .color(Color::DARK_GREEN)
-                    .clone();
-            }
-            Err(why) => {
-                println!("Error pausing track: {why}");
-                response = CommandResponse::new()
-                    .description(String::from("Error pausing song!"))
+                    .description(String::from("The song is currently paused!"))
                     .color(Color::DARK_RED)
                     .clone();
             }

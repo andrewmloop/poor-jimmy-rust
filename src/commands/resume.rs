@@ -75,7 +75,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
             },
             _ => {
                 response = CommandResponse::new()
-                    .description(String::from("There is nothing to resume!"))
+                    .description(String::from("The song is currently playing!"))
                     .color(Color::DARK_RED)
                     .clone();
             }
