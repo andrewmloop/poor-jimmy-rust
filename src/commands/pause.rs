@@ -20,12 +20,12 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
     if let Some(call) = manager.get(guild_id) {
         let handler = call.lock().await;
 
-        // Attempt to skip the currently playing song
+        // Attempt to pause the currently playing song
         let pause_result = match handler.queue().current() {
             Some(track) => track.pause(),
             None => {
                 response = CommandResponse::new()
-                    .description(String::from("There is no song currently playing!"))
+                    .description(String::from("There is no song to pause!"))
                     .color(Color::DARK_RED)
                     .clone();
 
@@ -41,7 +41,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
                     .clone();
             }
             Err(why) => {
-                println!("Error skipping track: {why}");
+                println!("Error pausing track: {why}");
                 response = CommandResponse::new()
                     .description(String::from("Error pausing song!"))
                     .color(Color::DARK_RED)
@@ -50,7 +50,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         };
     } else {
         response = CommandResponse::new()
-            .description(String::from("Error skipping song!"))
+            .description(String::from("Error pausing song!"))
             .color(Color::DARK_RED)
             .clone();
     }
