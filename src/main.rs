@@ -28,9 +28,11 @@ impl EventHandler for Handler {
             let response = match command_name {
                 "join" => Some(commands::join::run(&ctx, &command).await),
                 "leave" => Some(commands::leave::run(&ctx, &command).await),
+                "pause" => Some(commands::pause::run(&ctx, &command).await),
                 "ping" => Some(commands::ping::run(&command)),
                 "play" => Some(commands::play::run(&ctx, &command).await),
                 "skip" => Some(commands::skip::run(&ctx, &command).await),
+                "resume" => Some(commands::resume::run(&ctx, &command).await),
                 _ => {
                     let response = CommandResponse::new()
                         .description(String::from("Unknown command!"))
@@ -65,11 +67,13 @@ impl EventHandler for Handler {
 
         Command::set_global_application_commands(&ctx.http, |commands| {
             commands
-                .create_application_command(|command| commands::join::register(command))
-                .create_application_command(|command| commands::leave::register(command))
-                .create_application_command(|command| commands::ping::register(command))
-                .create_application_command(|command| commands::play::register(command))
-                .create_application_command(|command| commands::skip::register(command))
+                .create_application_command(|c| commands::join::register(c))
+                .create_application_command(|c| commands::leave::register(c))
+                .create_application_command(|c| commands::pause::register(c))
+                .create_application_command(|c| commands::ping::register(c))
+                .create_application_command(|c| commands::play::register(c))
+                .create_application_command(|c| commands::skip::register(c))
+                .create_application_command(|c| commands::resume::register(c))
         })
         .await
         .expect("Failed to register slash commands!");
@@ -78,7 +82,8 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().expect("Failed to load .env file");
+    dotenv::dotenv().expect("Failed to load .env file!");
+
     let token = env::var("DISCORD_TOKEN").expect("DISCORD_TOKEN env variable was not set!");
 
     let intents = GatewayIntents::non_privileged()
