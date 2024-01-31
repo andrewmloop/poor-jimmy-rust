@@ -32,6 +32,7 @@ impl EventHandler for Handler {
                 "ping" => Some(commands::ping::run(&command)),
                 "play" => Some(commands::play::run(&ctx, &command).await),
                 "skip" => Some(commands::skip::run(&ctx, &command).await),
+                "resume" => Some(commands::skip::run(&ctx, &command).await),
                 _ => {
                     let response = CommandResponse::new()
                         .description(String::from("Unknown command!"))
@@ -72,6 +73,7 @@ impl EventHandler for Handler {
                 .create_application_command(|c| commands::ping::register(c))
                 .create_application_command(|c| commands::play::register(c))
                 .create_application_command(|c| commands::skip::register(c))
+                .create_application_command(|c| commands::resume::register(c))
         })
         .await
         .expect("Failed to register slash commands!");
