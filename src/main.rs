@@ -23,9 +23,9 @@ impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             let command_name = command.data.name.as_str();
-            println!("Received command interaction: {command_name:#?}");
 
             let response = match command_name {
+                "clear" => Some(commands::clear::run(&ctx, &command).await),
                 "join" => Some(commands::join::run(&ctx, &command).await),
                 "leave" => Some(commands::leave::run(&ctx, &command).await),
                 "list" => Some(commands::list::run(&ctx, &command).await),
@@ -68,6 +68,7 @@ impl EventHandler for Handler {
 
         Command::set_global_application_commands(&ctx.http, |commands| {
             commands
+                .create_application_command(|c| commands::clear::register(c))
                 .create_application_command(|c| commands::join::register(c))
                 .create_application_command(|c| commands::leave::register(c))
                 .create_application_command(|c| commands::list::register(c))
