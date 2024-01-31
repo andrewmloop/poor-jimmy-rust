@@ -55,7 +55,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
                     Ok(_) => {
                         response = CommandResponse::new()
                             .description(String::from("Song **resumed!**"))
-                            .color(Color::DARK_RED)
+                            .color(Color::DARK_GREEN)
                             .clone();
                     }
                     Err(why) => {
