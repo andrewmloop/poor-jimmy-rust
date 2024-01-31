@@ -28,6 +28,7 @@ impl EventHandler for Handler {
             let response = match command_name {
                 "join" => Some(commands::join::run(&ctx, &command).await),
                 "leave" => Some(commands::leave::run(&ctx, &command).await),
+                "list" => Some(commands::list::run(&ctx, &command).await),
                 "pause" => Some(commands::pause::run(&ctx, &command).await),
                 "ping" => Some(commands::ping::run(&command)),
                 "play" => Some(commands::play::run(&ctx, &command).await),
@@ -69,6 +70,7 @@ impl EventHandler for Handler {
             commands
                 .create_application_command(|c| commands::join::register(c))
                 .create_application_command(|c| commands::leave::register(c))
+                .create_application_command(|c| commands::list::register(c))
                 .create_application_command(|c| commands::pause::register(c))
                 .create_application_command(|c| commands::ping::register(c))
                 .create_application_command(|c| commands::play::register(c))
