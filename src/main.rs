@@ -32,7 +32,7 @@ impl EventHandler for Handler {
                 "ping" => Some(commands::ping::run(&command)),
                 "play" => Some(commands::play::run(&ctx, &command).await),
                 "skip" => Some(commands::skip::run(&ctx, &command).await),
-                "resume" => Some(commands::skip::run(&ctx, &command).await),
+                "resume" => Some(commands::resume::run(&ctx, &command).await),
                 _ => {
                     let response = CommandResponse::new()
                         .description(String::from("Unknown command!"))
