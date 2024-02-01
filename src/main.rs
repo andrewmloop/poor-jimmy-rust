@@ -1,4 +1,5 @@
 mod commands;
+mod handlers;
 mod utils;
 
 use std::env;
