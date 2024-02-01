@@ -1,28 +1,15 @@
-use std::sync::Arc;
-
 use serenity::{
-    async_trait,
     builder::CreateApplicationCommand,
     client::Context,
-    http::Http,
-    model::{
-        application::{
-            command::CommandOptionType,
-            interaction::application_command::{
-                ApplicationCommandInteraction, CommandDataOptionValue,
-            },
-        },
-        prelude::ChannelId,
+    model::application::{
+        command::CommandOptionType,
+        interaction::application_command::{ApplicationCommandInteraction, CommandDataOptionValue},
     },
     utils::Color,
 };
 
-use songbird::{
-    input::{self},
-    Event, EventContext, EventHandler as VoiceEventHandler, TrackEvent,
-};
+use songbird::input::{self};
 
-// use crate::utils::map::HttpKey;
 use crate::utils::result::CommandResponse;
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
@@ -91,19 +78,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         };
 
         // Play/enqueue song
-        let song = handler.enqueue_source(source);
-        let send_http = ctx.http.clone();
-        let channel_id = command.channel_id;
-
-        // Add an event to play once song finishes
-        let _ = song.add_event(
-            Event::Track(TrackEvent::End),
-            SongEndNotifier {
-                channel_id,
-                http: send_http,
-                song_title: source_title.clone(),
-            },
-        );
+        handler.enqueue_source(source);
 
         let response_description = format_description(source_title, should_enqueue);
 
@@ -119,30 +94,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
     }
 
     response
-}
-
-struct SongEndNotifier {
-    channel_id: ChannelId,
-    http: Arc<Http>,
-    song_title: String,
-}
-
-#[async_trait]
-impl VoiceEventHandler for SongEndNotifier {
-    async fn act(&self, _ctx: &EventContext<'_>) -> Option<Event> {
-        let _ = self
-            .channel_id
-            .send_message(&self.http, |message| {
-                message.add_embed(|embed| {
-                    embed
-                        .description(format!("{} **ended!**", self.song_title))
-                        .color(Color::DARK_GREEN)
-                })
-            })
-            .await;
-
-        None
-    }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

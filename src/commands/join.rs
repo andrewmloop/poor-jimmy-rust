@@ -3,7 +3,9 @@ use serenity::{
     model::application::interaction::application_command::ApplicationCommandInteraction,
     utils::Color,
 };
+use songbird::{Event, TrackEvent};
 
+use crate::handlers::track_end::TrackEndNotifier;
 use crate::utils::result::CommandResponse;
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
@@ -11,9 +13,10 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
        1. Grab guild_id and voice_channel_id from context/command
        2. Grab the songbird manager
        3. Use the manager to connect to the voice channel
-       4. Return a "Poor Jimmy has joined the voice chat" on success
-       5. Return a "You're not in a voice channel, if one cannot be found"
-       6. Return a "Error joining the voice channel for all other errors"
+       4. Update the handler with any global event handlers we may need
+       5. Return a "Poor Jimmy has joined the voice chat" on success
+       6. Return a "You're not in a voice channel, if one cannot be found"
+       7. Return a "Error joining the voice channel for all other errors"
     */
     let response: CommandResponse;
 
@@ -37,6 +40,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
                 return response;
             }
         };
+
         let voice_state_channel = guild
             .voice_states
             .get(&user_id)
@@ -61,9 +65,22 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         .await
         .expect("Songbird Voice client placed in at initialisation.");
 
-    let (_call, success) = manager.join(guild_id, connect_to).await;
+    let (call, success) = manager.join(guild_id, connect_to).await;
 
     if let Ok(_channel) = success {
+        let mut handler = call.lock().await;
+
+        handler.remove_all_global_events();
+
+        handler.add_global_event(
+            Event::Track(TrackEvent::End),
+            TrackEndNotifier {
+                channel_id: command.channel_id,
+                http: ctx.http.clone(),
+                call: call.clone(),
+            },
+        );
+
         response = CommandResponse::new()
             .description(String::from("Poor Jimmy joined the voice channel"))
             .color(Color::DARK_GREEN)
@@ -83,5 +100,5 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
         .name("join")
-        .description("Adds Poor Jimmy to the voice channel you're in")
+        .description("Add Poor Jimmy to the voice channel you're in")
 }
