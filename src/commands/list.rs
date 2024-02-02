@@ -63,7 +63,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
         .name("list")
-        .description("List the songs in the queue")
+        .description("Display the current queue of songs")
 }
 
 fn format_queue_description(list_of_titles: Vec<String>) -> String {

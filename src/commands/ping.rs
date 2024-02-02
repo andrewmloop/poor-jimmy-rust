@@ -21,5 +21,5 @@ pub fn run(command: &ApplicationCommandInteraction) -> CommandResponse {
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("ping").description("Responds with Pong!")
+    command.name("ping").description("Respond with Pong!")
 }

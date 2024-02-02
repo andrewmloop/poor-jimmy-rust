@@ -27,6 +27,7 @@ impl EventHandler for Handler {
 
             let response = match command_name {
                 "clear" => Some(commands::clear::run(&ctx, &command).await),
+                "help" => Some(commands::help::run()),
                 "join" => Some(commands::join::run(&ctx, &command).await),
                 "leave" => Some(commands::leave::run(&ctx, &command).await),
                 "list" => Some(commands::list::run(&ctx, &command).await),
@@ -70,14 +71,15 @@ impl EventHandler for Handler {
         Command::set_global_application_commands(&ctx.http, |commands| {
             commands
                 .create_application_command(|c| commands::clear::register(c))
+                .create_application_command(|c| commands::help::register(c))
                 .create_application_command(|c| commands::join::register(c))
                 .create_application_command(|c| commands::leave::register(c))
                 .create_application_command(|c| commands::list::register(c))
                 .create_application_command(|c| commands::pause::register(c))
                 .create_application_command(|c| commands::ping::register(c))
                 .create_application_command(|c| commands::play::register(c))
-                .create_application_command(|c| commands::skip::register(c))
                 .create_application_command(|c| commands::resume::register(c))
+                .create_application_command(|c| commands::skip::register(c))
         })
         .await
         .expect("Failed to register slash commands!");
