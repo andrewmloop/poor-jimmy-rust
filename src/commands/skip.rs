@@ -63,5 +63,5 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
         .name("skip")
-        .description("Skips the currently playing song")
+        .description("Skip the currently playing song")
 }

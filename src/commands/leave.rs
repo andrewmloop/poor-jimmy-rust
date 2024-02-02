@@ -42,5 +42,5 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
         .name("leave")
-        .description("Removes Poor Jimmy from the voice channel")
+        .description("Remove Poor Jimmy from the voice channel")
 }

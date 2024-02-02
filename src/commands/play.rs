@@ -99,7 +99,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
         .name("play")
-        .description("Plays the audio from a Youtube video")
+        .description("Play the audio from a Youtube video")
         .create_option(|option| {
             option
                 .name("url")

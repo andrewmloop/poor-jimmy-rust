@@ -100,5 +100,5 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
         .name("join")
-        .description("Add Poor Jimmy to the voice channel you're in")
+        .description("Summon Poor Jimmy to your voice channel")
 }
