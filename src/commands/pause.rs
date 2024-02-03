@@ -54,7 +54,9 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
                 Some(song) => match song.pause() {
                     Ok(_) => {
                         response = CommandResponse::new()
-                            .description(String::from("Song **paused!**"))
+                            .description(String::from(
+                                "Song **paused!** Use **/resume** to continue playback",
+                            ))
                             .color(Color::DARK_GREEN)
                             .clone();
                     }

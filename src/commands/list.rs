@@ -70,7 +70,7 @@ fn format_queue_description(list_of_titles: Vec<String>) -> String {
     let mut description = String::new();
 
     for (index, title) in list_of_titles.iter().enumerate() {
-        description.push_str(format!("{}: {}\n", index + 1, title).as_str())
+        description.push_str(format!("**{}:** {}\n", index + 1, title).as_str())
     }
 
     description
