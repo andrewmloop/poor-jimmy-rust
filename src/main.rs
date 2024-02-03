@@ -33,7 +33,16 @@ impl EventHandler for Handler {
                 "list" => Some(commands::list::run(&ctx, &command).await),
                 "pause" => Some(commands::pause::run(&ctx, &command).await),
                 "ping" => Some(commands::ping::run(&command)),
-                "play" => Some(commands::play::run(&ctx, &command).await),
+                // The play command can take a long time to response depending
+                // on if a playlist is being queued. The command itself
+                // handles responding to the command.
+                //
+                // TODO: Refactor bot commands to respond to slash commands,
+                //       not the handler.
+                "play" => {
+                    commands::play::run(&ctx, &command).await;
+                    None
+                }
                 "skip" => Some(commands::skip::run(&ctx, &command).await),
                 "resume" => Some(commands::resume::run(&ctx, &command).await),
                 _ => {

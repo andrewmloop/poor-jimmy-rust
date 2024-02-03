@@ -1,5 +1,6 @@
+use regex::Regex;
 use serenity::{
-    builder::CreateApplicationCommand,
+    builder::{CreateApplicationCommand, CreateEmbed},
     client::Context,
     model::application::{
         command::CommandOptionType,
@@ -9,11 +10,12 @@ use serenity::{
 };
 
 use songbird::input::{self};
+use tokio::process::Command;
 
-use crate::utils::result::CommandResponse;
+use crate::utils::message::respond_to_command;
 
-pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
-    let response: CommandResponse;
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
+    let mut response_embed = CreateEmbed::default();
 
     // Grab the value passed into the slash command
     let command_option = command
@@ -29,23 +31,25 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
     let string_option = match command_option {
         CommandDataOptionValue::String(option) => option,
         _ => {
-            response = CommandResponse::new()
-                .description(String::from("Please provide a valid Youtube URL"))
-                .color(Color::DARK_RED)
-                .clone();
+            response_embed
+                .description("Please provide a valid Youtube URL")
+                .color(Color::DARK_RED);
 
-            return response;
+            respond_to_command(command, &ctx.http, response_embed).await;
+
+            return;
         }
     };
 
     // Validate its a valid Youtube URL
-    if !string_option.contains("youtube.com/watch") {
-        response = CommandResponse::new()
-            .description(String::from("Please provide a valid Youtube URL"))
-            .color(Color::DARK_RED)
-            .clone();
+    if !string_option.contains("youtube.com") {
+        response_embed
+            .description("Please provide a valid Youtube URL")
+            .color(Color::DARK_RED);
 
-        return response;
+        respond_to_command(command, &ctx.http, response_embed).await;
+
+        return;
     }
 
     // Grab the voice client registered with Serentiy's shard key-value store
@@ -54,46 +58,126 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         .expect("Songbird Voice client placed in at initialization.");
 
     let guild_id = command.guild_id.unwrap();
-    println!("Play command guild id: {guild_id}");
 
     // Grab the active Call for the command's guild
     if let Some(call) = manager.get(guild_id) {
         let mut handler = call.lock().await;
 
-        // If a song is currently playing, we'll add the new song to the queue
-        let should_enqueue = match handler.queue().current() {
-            Some(_) => true,
-            None => false,
-        };
+        // If url is a Youtube playlist
+        if string_option.contains("/playlist") {
+            // Use yt-dlp to produce json of all the individual videos
+            let playlist_result = Command::new("yt-dlp")
+                .args(["-j", "--flat-playlist", &string_option])
+                .output()
+                .await;
 
-        // Get the audio source for the URL
-        let source = input::ytdl(string_option)
-            .await
-            .expect("Failure grabbing Youtube URL source");
+            // Grab only the urls
+            let playlist = match playlist_result {
+                Ok(playlist) => {
+                    // println!("Playlist songs {:?}", playlist);
+                    String::from_utf8(playlist.stdout).expect("Error parsing playlist json")
+                }
+                Err(why) => {
+                    println!("Error getting playlist details: {why}");
 
-        let source_metadata = source.metadata.clone();
-        let source_title = match source_metadata.title {
-            Some(title) => title,
-            None => String::from("Song"),
-        };
+                    response_embed
+                        .description("Error queueing playlist")
+                        .color(Color::DARK_RED);
 
-        // Play/enqueue song
-        handler.enqueue_source(source);
+                    respond_to_command(command, &ctx.http, response_embed).await;
 
-        let response_description = format_description(source_title, should_enqueue);
+                    return;
+                }
+            };
 
-        response = CommandResponse::new()
-            .description(response_description)
-            .color(Color::DARK_GREEN)
-            .clone();
-    } else {
-        response = CommandResponse::new()
-            .description(String::from("Error playing song"))
-            .color(Color::DARK_RED)
-            .clone();
+            println!("{:?}", playlist);
+
+            // Split the string of urls into a vec
+            let re = Regex::new(r#""url": "(https://www.youtube.com/watch\?v=[A-Za-z0-9]{11})""#)
+                .expect("Error building Youtube URL regex");
+
+            let urls: Vec<String> = re
+                .captures_iter(&playlist)
+                .map(|capture| capture[1].to_string())
+                .collect();
+
+            println!("{:?}", urls);
+
+            // Queueing all the urls may take some time, notify the channel
+            response_embed
+                .description("Queueing playlist. This may take some time...")
+                .color(Color::DARK_GREEN);
+
+            respond_to_command(command, &ctx.http, response_embed).await;
+
+            // Attempt to enqueue as many of the videos we can
+            let mut num_queued_songs = 0;
+
+            for url in urls {
+                let source = match input::ytdl(url).await {
+                    Ok(source) => source,
+                    Err(why) => {
+                        println!("Error grabbing playlist source: {why}");
+                        continue;
+                    }
+                };
+
+                handler.enqueue_source(source);
+                num_queued_songs += 1;
+            }
+
+            // Send response with number of queued songs
+            let _ = command
+                .channel_id
+                .send_message(&ctx.http, |message| {
+                    message.add_embed(|embed| {
+                        embed
+                            .description(format!(
+                                "{} songs **queued!** Use **/list** to view them",
+                                num_queued_songs
+                            ))
+                            .color(Color::DARK_GREEN)
+                    })
+                })
+                .await;
+
+            return;
+        } else if string_option.contains("/watch") {
+            // If a song is currently playing, we'll add the new song to the queue
+            let should_enqueue = match handler.queue().current() {
+                Some(_) => true,
+                None => false,
+            };
+
+            // Get the audio source for the URL
+            let source = input::ytdl(string_option)
+                .await
+                .expect("Failure grabbing Youtube URL source");
+
+            let source_metadata = source.metadata.clone();
+            let source_title = match source_metadata.title {
+                Some(title) => title,
+                None => String::from("Song"),
+            };
+
+            // Play/enqueue song
+            handler.enqueue_source(source);
+
+            let response_description = format_description(source_title, should_enqueue);
+
+            response_embed
+                .description(response_description)
+                .color(Color::DARK_GREEN);
+
+            respond_to_command(command, &ctx.http, response_embed).await;
+        } else {
+            response_embed
+                .description("Error playing song")
+                .color(Color::DARK_RED);
+
+            respond_to_command(command, &ctx.http, response_embed).await;
+        }
     }
-
-    response
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
