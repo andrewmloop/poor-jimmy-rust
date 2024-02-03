@@ -13,7 +13,7 @@ pub fn run() -> CommandResponse {
     \n### 5. /list\nDisplay the current queue of songs
     \n### 6. /pause\nPause the currently playing song
     \n### 7. /ping\nRespond with Pong!
-    \n### 8. /play [url]\nPlay the audio from a Youtube video. This currently only supports standalone Youtube videos. Youtube playlists and Spotify funcionality comming soon!
+    \n### 8. /play [url]\nPlay the audio from a Youtube video or playlist. Spotify funcionality coming soon!
     \n### 9. /resume\nResume the currently paused song
     \n### 10. /skip\nSkip the currently playing song");
 
