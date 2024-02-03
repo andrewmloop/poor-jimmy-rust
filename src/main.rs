@@ -12,7 +12,7 @@ use serenity::async_trait;
 use serenity::client::{ClientBuilder, Context, EventHandler};
 use serenity::model::application::command::Command;
 use serenity::model::application::interaction::Interaction;
-use serenity::model::gateway::Ready;
+use serenity::model::gateway::{Activity, Ready};
 use serenity::prelude::*;
 use serenity::utils::Color;
 use songbird::SerenityInit;
@@ -92,6 +92,8 @@ impl EventHandler for Handler {
         })
         .await
         .expect("Failed to register slash commands!");
+
+        ctx.set_activity(Activity::listening("/play")).await;
     }
 }
 
