@@ -1,13 +1,14 @@
 use serenity::{
-    builder::CreateApplicationCommand, client::Context,
+    builder::{CreateApplicationCommand, CreateEmbed},
+    client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
     utils::Color,
 };
 
-use crate::utils::result::CommandResponse;
+use crate::utils::message::respond_to_command;
 
-pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
-    let response: CommandResponse;
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
+    let mut response_embed = CreateEmbed::default();
 
     // Grab the voice client registered with Serentiy's shard key-value store
     let manager = songbird::get(&ctx)
@@ -23,28 +24,27 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         let queue_length = handler.queue().len();
 
         if queue_length == 0 {
-            response = CommandResponse::new()
-                .description(String::from("There is nothing to clear!"))
-                .color(Color::DARK_GREEN)
-                .clone();
+            response_embed
+                .description("There is nothing to clear!")
+                .color(Color::DARK_GREEN);
 
-            return response;
+            respond_to_command(command, &ctx.http, response_embed).await;
+
+            return;
         }
 
         handler.queue().stop();
 
-        response = CommandResponse::new()
-            .description(String::from("Queue **cleared!**"))
-            .color(Color::DARK_GREEN)
-            .clone();
+        response_embed
+            .description("Queue **cleared!**")
+            .color(Color::DARK_GREEN);
     } else {
-        response = CommandResponse::new()
-            .description(String::from("Error clearing queue!"))
-            .color(Color::DARK_RED)
-            .clone();
+        response_embed
+            .description("Error clearing queue!")
+            .color(Color::DARK_RED);
     }
 
-    response
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

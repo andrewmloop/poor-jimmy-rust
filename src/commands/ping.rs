@@ -1,12 +1,15 @@
 use serenity::{
-    builder::CreateApplicationCommand,
+    builder::{CreateApplicationCommand, CreateEmbed},
+    client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
     utils::Color,
 };
 
-use crate::utils::result::CommandResponse;
+use crate::utils::message::respond_to_command;
 
-pub fn run(command: &ApplicationCommandInteraction) -> CommandResponse {
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
+    let mut response_embed = CreateEmbed::default();
+
     let guild_id = command
         .guild_id
         .expect("No Guild ID found on interaction")
@@ -14,10 +17,9 @@ pub fn run(command: &ApplicationCommandInteraction) -> CommandResponse {
 
     println!("Ping! From guild id: {guild_id}");
 
-    CommandResponse::new()
-        .description(String::from("Pong!"))
-        .color(Color::DARK_GREEN)
-        .clone()
+    response_embed.description("Pong!").color(Color::DARK_GREEN);
+
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

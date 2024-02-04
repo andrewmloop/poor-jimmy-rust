@@ -1,13 +1,14 @@
 use serenity::{
-    builder::CreateApplicationCommand, client::Context,
+    builder::{CreateApplicationCommand, CreateEmbed},
+    client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
     utils::Color,
 };
 
-use crate::utils::result::CommandResponse;
+use crate::utils::message::respond_to_command;
 
-pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
-    let response: CommandResponse;
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
+    let mut response_embed = CreateEmbed::default();
 
     // Grab the voice client registered with Serentiy's shard key-value store
     let manager = songbird::get(&ctx)
@@ -23,12 +24,13 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         // Grab the queue and make sure its not empty
         let current_queue = handler.queue().current_queue();
         if current_queue.is_empty() {
-            response = CommandResponse::new()
-                .description(String::from("The queue is **empty!**"))
-                .color(Color::DARK_GREEN)
-                .clone();
+            response_embed
+                .description("The queue is **empty!**")
+                .color(Color::DARK_GREEN);
 
-            return response;
+            respond_to_command(command, &ctx.http, response_embed).await;
+
+            return;
         }
 
         // Transform the Vec of TrackHandles into a Vec of titles
@@ -46,18 +48,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         // Build the response description string.
         let response_description = format_queue_description(queue_titles);
 
-        response = CommandResponse::new()
+        response_embed
             .description(response_description)
-            .color(Color::DARK_GREEN)
-            .clone();
+            .color(Color::DARK_GREEN);
     } else {
-        response = CommandResponse::new()
-            .description(String::from("Error listing queue!"))
-            .color(Color::DARK_RED)
-            .clone();
+        response_embed
+            .description("Error listing queue!")
+            .color(Color::DARK_RED);
     }
 
-    response
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

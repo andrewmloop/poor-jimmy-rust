@@ -1,3 +1,4 @@
+use serenity::builder::CreateEmbed;
 use serenity::{
     builder::CreateApplicationCommand, client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
@@ -6,9 +7,9 @@ use serenity::{
 use songbird::{Event, TrackEvent};
 
 use crate::handlers::track_end::TrackEndNotifier;
-use crate::utils::result::CommandResponse;
+use crate::utils::message::respond_to_command;
 
-pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     /*
        1. Grab guild_id and voice_channel_id from context/command
        2. Grab the songbird manager
@@ -18,7 +19,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
        6. Return a "You're not in a voice channel, if one cannot be found"
        7. Return a "Error joining the voice channel for all other errors"
     */
-    let response: CommandResponse;
+    let mut response_embed = CreateEmbed::default();
 
     let guild_id = command.guild_id.unwrap();
     let user_id = {
@@ -32,12 +33,13 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
             None => {
                 println!("Error finding guild in cache");
                 println!("{:?}", ctx.cache);
-                response = CommandResponse::new()
+                response_embed
                     .description(String::from("Error joining voice channel"))
-                    .color(Color::DARK_RED)
-                    .clone();
+                    .color(Color::DARK_RED);
 
-                return response;
+                respond_to_command(command, &ctx.http, response_embed).await;
+
+                return;
             }
         };
 
@@ -52,12 +54,13 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
     let connect_to = match voice_channel_id {
         Some(channel) => channel,
         None => {
-            response = CommandResponse::new()
-                .description(String::from("You're not in a voice channel!"))
-                .color(Color::DARK_RED)
-                .clone();
+            response_embed
+                .description("You're not in a voice channel!")
+                .color(Color::DARK_RED);
 
-            return response;
+            respond_to_command(command, &ctx.http, response_embed).await;
+
+            return;
         }
     };
 
@@ -81,20 +84,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
             },
         );
 
-        response = CommandResponse::new()
-            .description(String::from("Poor Jimmy joined the voice channel"))
-            .color(Color::DARK_GREEN)
-            .clone();
+        response_embed
+            .description(String::from("Poor Jimmy **joined** the voice channel!"))
+            .color(Color::DARK_GREEN);
     } else {
-        response = CommandResponse::new()
-            .description(String::from("Error joining voice channel"))
-            .color(Color::DARK_RED)
-            .clone();
-
-        return response;
+        response_embed
+            .description("Error joining voice channel")
+            .color(Color::DARK_RED);
     }
 
-    response
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

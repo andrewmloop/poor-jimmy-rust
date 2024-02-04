@@ -74,8 +74,22 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             // Grab only the urls
             let playlist = match playlist_result {
                 Ok(playlist) => {
-                    // println!("Playlist songs {:?}", playlist);
-                    String::from_utf8(playlist.stdout).expect("Error parsing playlist json")
+                    let playlist_json_result = String::from_utf8(playlist.stdout);
+
+                    match playlist_json_result {
+                        Ok(playlist) => playlist,
+                        Err(why) => {
+                            println!("Error parsing playlist json: {why}");
+
+                            response_embed
+                                .description("Error queueing playlist")
+                                .color(Color::DARK_RED);
+
+                            respond_to_command(command, &ctx.http, response_embed).await;
+
+                            return;
+                        }
+                    }
                 }
                 Err(why) => {
                     println!("Error getting playlist details: {why}");
@@ -90,8 +104,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 }
             };
 
-            println!("{:?}", playlist);
-
             // Split the string of urls into a vec
             let re = Regex::new(r#""url": "(https://www.youtube.com/watch\?v=[A-Za-z0-9]{11})""#)
                 .expect("Error building Youtube URL regex");
@@ -101,11 +113,9 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .map(|capture| capture[1].to_string())
                 .collect();
 
-            println!("{:?}", urls);
-
             // Queueing all the urls may take some time, notify the channel
             response_embed
-                .description("Queueing playlist. This may take some time...")
+                .description("**Queueing** playlist. This may take some time...")
                 .color(Color::DARK_GREEN);
 
             respond_to_command(command, &ctx.http, response_embed).await;
@@ -150,9 +160,22 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             };
 
             // Get the audio source for the URL
-            let source = input::ytdl(string_option)
-                .await
-                .expect("Failure grabbing Youtube URL source");
+            let source_result = input::ytdl(string_option).await;
+
+            let source = match source_result {
+                Ok(source) => source,
+                Err(why) => {
+                    println!("Error grabbing Youtube single video source: {why}");
+
+                    response_embed
+                        .description("Error playing song")
+                        .color(Color::DARK_RED);
+
+                    respond_to_command(command, &ctx.http, response_embed).await;
+
+                    return;
+                }
+            };
 
             let source_metadata = source.metadata.clone();
             let source_title = match source_metadata.title {
@@ -168,16 +191,20 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             response_embed
                 .description(response_description)
                 .color(Color::DARK_GREEN);
-
-            respond_to_command(command, &ctx.http, response_embed).await;
         } else {
             response_embed
                 .description("Error playing song")
                 .color(Color::DARK_RED);
-
-            respond_to_command(command, &ctx.http, response_embed).await;
         }
+    } else {
+        response_embed
+            .description(
+                "Error playing song! Make sure Poor Jimmy is in a voice channel with **/join**",
+            )
+            .color(Color::DARK_RED);
     }
+
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

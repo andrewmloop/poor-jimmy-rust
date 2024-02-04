@@ -1,14 +1,15 @@
 use serenity::{
-    builder::CreateApplicationCommand, client::Context,
+    builder::{CreateApplicationCommand, CreateEmbed},
+    client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
     utils::Color,
 };
 use songbird::tracks::PlayMode;
 
-use crate::utils::result::CommandResponse;
+use crate::utils::message::respond_to_command;
 
-pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
-    let response: CommandResponse;
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
+    let mut response_embed = CreateEmbed::default();
 
     // Grab the voice client registered with Serentiy's shard key-value store
     let manager = songbird::get(&ctx)
@@ -30,21 +31,23 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
                 Ok(state) => state.playing,
                 Err(why) => {
                     println!("Error getting song state: {why}");
-                    response = CommandResponse::new()
-                        .description(String::from("Error resuming song!"))
-                        .color(Color::DARK_RED)
-                        .clone();
+                    response_embed
+                        .description("Error resuming song!")
+                        .color(Color::DARK_RED);
 
-                    return response;
+                    respond_to_command(command, &ctx.http, response_embed).await;
+
+                    return;
                 }
             },
             None => {
-                response = CommandResponse::new()
-                    .description(String::from("There is no song to resume!"))
-                    .color(Color::DARK_RED)
-                    .clone();
+                response_embed
+                    .description("There is no song to resume!")
+                    .color(Color::DARK_RED);
 
-                return response;
+                respond_to_command(command, &ctx.http, response_embed).await;
+
+                return;
             }
         };
 
@@ -53,41 +56,36 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
             PlayMode::Pause => match current_song {
                 Some(song) => match song.play() {
                     Ok(_) => {
-                        response = CommandResponse::new()
-                            .description(String::from("Song **resumed!**"))
-                            .color(Color::DARK_GREEN)
-                            .clone();
+                        response_embed
+                            .description("Song **resumed!**")
+                            .color(Color::DARK_GREEN);
                     }
                     Err(why) => {
                         println!("Error resuming song: {why}");
-                        response = CommandResponse::new()
-                            .description(String::from("Error resuming song!"))
-                            .color(Color::DARK_RED)
-                            .clone();
+                        response_embed
+                            .description("Error resuming song!")
+                            .color(Color::DARK_RED);
                     }
                 },
                 None => {
-                    response = CommandResponse::new()
-                        .description(String::from("There is nothing to resume!"))
-                        .color(Color::DARK_RED)
-                        .clone();
+                    response_embed
+                        .description("There is nothing to resume!")
+                        .color(Color::DARK_RED);
                 }
             },
             _ => {
-                response = CommandResponse::new()
-                    .description(String::from("The song is currently playing!"))
-                    .color(Color::DARK_RED)
-                    .clone();
+                response_embed
+                    .description("The song is currently playing!")
+                    .color(Color::DARK_RED);
             }
         };
     } else {
-        response = CommandResponse::new()
-            .description(String::from("Error resuming song!"))
-            .color(Color::DARK_RED)
-            .clone();
+        response_embed
+            .description("Error resuming song!")
+            .color(Color::DARK_RED);
     }
 
-    response
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

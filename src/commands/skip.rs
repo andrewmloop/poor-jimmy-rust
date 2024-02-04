@@ -1,13 +1,14 @@
 use serenity::{
-    builder::CreateApplicationCommand, client::Context,
+    builder::{CreateApplicationCommand, CreateEmbed},
+    client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
     utils::Color,
 };
 
-use crate::utils::result::CommandResponse;
+use crate::utils::message::respond_to_command;
 
-pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
-    let response: CommandResponse;
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
+    let mut response_embed = CreateEmbed::default();
 
     // Grab the voice client registered with Serentiy's shard key-value store
     let manager = songbird::get(&ctx)
@@ -24,12 +25,13 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         let skip_result = match handler.queue().current() {
             Some(track) => track.stop(),
             None => {
-                response = CommandResponse::new()
-                    .description(String::from("There is no song currently playing!"))
-                    .color(Color::DARK_RED)
-                    .clone();
+                response_embed
+                    .description("There is no song currently playing!")
+                    .color(Color::DARK_RED);
 
-                return response;
+                respond_to_command(command, &ctx.http, response_embed).await;
+
+                return;
             }
         };
 
@@ -37,27 +39,24 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
             // The song was successfully skipped. Notify the channel if the
             // queue is now empty
             Ok(_) => {
-                response = CommandResponse::new()
-                    .description(String::from("Song **skipped!**"))
-                    .color(Color::DARK_GREEN)
-                    .clone();
+                response_embed
+                    .description("Song **skipped!**")
+                    .color(Color::DARK_GREEN);
             }
             Err(why) => {
                 println!("Error skipping track: {why}");
-                response = CommandResponse::new()
-                    .description(String::from("Error skipping song!"))
-                    .color(Color::DARK_RED)
-                    .clone();
+                response_embed
+                    .description("Error skipping song!")
+                    .color(Color::DARK_RED);
             }
         };
     } else {
-        response = CommandResponse::new()
-            .description(String::from("Error skipping song!"))
-            .color(Color::DARK_RED)
-            .clone();
+        response_embed
+            .description("Error skipping song!")
+            .color(Color::DARK_RED);
     }
 
-    response
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

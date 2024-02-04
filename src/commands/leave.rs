@@ -1,12 +1,13 @@
 use serenity::{
-    builder::CreateApplicationCommand, client::Context,
+    builder::{CreateApplicationCommand, CreateEmbed},
+    client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
     utils::Color,
 };
 
-use crate::utils::result::CommandResponse;
+use crate::utils::message::respond_to_command;
 
-pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> CommandResponse {
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     /*
        1. Grab guild_id
        2. Grab the songbird manager
@@ -14,7 +15,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
        4. Return a "Poor Jimmy has left the voice chat" on success
        5. Return a "Error leaving the voice channel" for all other errors"
     */
-    let response: CommandResponse;
+    let mut response_embed = CreateEmbed::default();
 
     let guild_id = command.guild_id.unwrap();
 
@@ -23,20 +24,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Comm
         .expect("Songbird Voice client placed in at initialisation.");
 
     if let Ok(_) = manager.leave(guild_id).await {
-        response = CommandResponse::new()
-            .description(String::from("Poor Jimmy left the voice channel"))
-            .color(Color::DARK_GREEN)
-            .clone();
+        response_embed
+            .description("Poor Jimmy **left** the voice channel!")
+            .color(Color::DARK_GREEN);
     } else {
-        response = CommandResponse::new()
-            .description(String::from("Error leaving voice channel"))
-            .color(Color::DARK_RED)
-            .clone();
-
-        return response;
+        response_embed
+            .description("Error leaving voice channel")
+            .color(Color::DARK_RED);
     }
 
-    response
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
