@@ -13,7 +13,9 @@ use utils::map::HttpKey;
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().expect("Failed to load .env file!");
+    if let Err(why) = dotenv::dotenv() {
+        println!("Error loading .env file: {why}");
+    }
 
     let token = env::var("DISCORD_TOKEN").expect("DISCORD_TOKEN env variable was not set!");
 
