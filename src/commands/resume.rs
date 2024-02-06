@@ -81,7 +81,9 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         };
     } else {
         response_embed
-            .description("Error resuming song!")
+            .description(
+                "Error resuming song! Ensure Poor Jimmy is in a voice channel with **/join**",
+            )
             .color(Color::DARK_RED);
     }
 

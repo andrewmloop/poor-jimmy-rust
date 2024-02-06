@@ -89,7 +89,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             .color(Color::DARK_GREEN);
     } else {
         response_embed
-            .description("Error joining voice channel")
+            .description("Error joining voice channel!")
             .color(Color::DARK_RED);
     }
 

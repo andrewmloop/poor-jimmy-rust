@@ -9,10 +9,10 @@ use serenity::{
     utils::Color,
 };
 
-use songbird::input::{self};
+use songbird::input::Restartable;
 use tokio::process::Command;
 
-use crate::utils::{message::respond_to_command, queue::is_gte_max_queue_size};
+use crate::utils::message::respond_to_command;
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut response_embed = CreateEmbed::default();
@@ -29,7 +29,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
     // Validate the value is a string
     let string_option = match command_option {
-        CommandDataOptionValue::String(option) => option,
+        CommandDataOptionValue::String(option) => option.clone(),
         _ => {
             response_embed
                 .description("Please provide a valid Youtube URL")
@@ -62,20 +62,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     // Grab the active Call for the command's guild
     if let Some(call) = manager.get(guild_id) {
         let mut handler = call.lock().await;
-
-        // If the queue is already greater than max queue
-        // size, notify and don't continue
-        let queue_length = handler.queue().len() as u32;
-
-        if is_gte_max_queue_size(queue_length) {
-            response_embed
-                    .description("The queue is **full!**. The max queue size is restricted currently to conserve memory")
-                    .color(Color::DARK_RED);
-
-            respond_to_command(command, &ctx.http, response_embed).await;
-
-            return;
-        }
 
         // If url is a Youtube playlist
         if string_option.contains("/playlist") {
@@ -129,7 +115,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
             // Queueing all the urls may take some time, notify the channel
             response_embed
-                .description("**Queueing** playlist. This may take some time...")
+                .description("**Queueing** playlist. This may take some time. Some commands will be unavilable until completed.")
                 .color(Color::DARK_GREEN);
 
             respond_to_command(command, &ctx.http, response_embed).await;
@@ -138,20 +124,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             let mut num_queued_songs = 0;
 
             for url in urls {
-                let source = match input::ytdl(url).await {
+                let source = match Restartable::ytdl(url, true).await {
                     Ok(source) => source,
                     Err(why) => {
-                        println!("Error grabbing playlist source: {why}");
+                        println!("Error grabbing playlist source. Most likely due to an unavailable/hidden video: {why}");
                         continue;
                     }
                 };
 
-                handler.enqueue_source(source);
+                handler.enqueue_source(source.into());
                 num_queued_songs += 1;
-
-                if is_gte_max_queue_size(queue_length + num_queued_songs) {
-                    break;
-                }
             }
 
             // Send response with number of queued songs
@@ -178,7 +160,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             };
 
             // Get the audio source for the URL
-            let source_result = input::ytdl(string_option).await;
+            let source_result = Restartable::ytdl(string_option, true).await;
 
             let source = match source_result {
                 Ok(source) => source,
@@ -195,16 +177,14 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 }
             };
 
-            let source_metadata = source.metadata.clone();
-            let source_title = match source_metadata.title {
-                Some(title) => title,
+            // Play/enqueue song
+            let track = handler.enqueue_source(source.into());
+            let track_title = match &track.metadata().title {
+                Some(title) => title.clone(),
                 None => String::from("Song"),
             };
 
-            // Play/enqueue song
-            handler.enqueue_source(source);
-
-            let response_description = format_description(source_title, should_enqueue);
+            let response_description = format_description(track_title, should_enqueue);
 
             response_embed
                 .description(response_description)
@@ -217,7 +197,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     } else {
         response_embed
             .description(
-                "Error playing song! Make sure Poor Jimmy is in a voice channel with **/join**",
+                "Error playing song! Ensure Poor Jimmy is in a voice channel with **/join**",
             )
             .color(Color::DARK_RED);
     }
