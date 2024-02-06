@@ -53,7 +53,9 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             .color(Color::DARK_GREEN);
     } else {
         response_embed
-            .description("Error listing queue!")
+            .description(
+                "Error listing queue! Ensure Poor Jimmy is in a voice channel with **/join**",
+            )
             .color(Color::DARK_RED);
     }
 

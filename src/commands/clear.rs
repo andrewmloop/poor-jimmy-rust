@@ -40,7 +40,9 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             .color(Color::DARK_GREEN);
     } else {
         response_embed
-            .description("Error clearing queue!")
+            .description(
+                "Error clearing queue! Ensure Poor Jimmy is in a voice channel with **/join**",
+            )
             .color(Color::DARK_RED);
     }
 

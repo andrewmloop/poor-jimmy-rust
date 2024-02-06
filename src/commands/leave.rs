@@ -29,7 +29,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             .color(Color::DARK_GREEN);
     } else {
         response_embed
-            .description("Error leaving voice channel")
+            .description("Error leaving voice channel! Ensure Poor Jimmy is in a voice channel with **/join**")
             .color(Color::DARK_RED);
     }
 
