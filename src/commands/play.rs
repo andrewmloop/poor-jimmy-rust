@@ -12,7 +12,7 @@ use serenity::{
 use songbird::input::{self};
 use tokio::process::Command;
 
-use crate::utils::message::respond_to_command;
+use crate::utils::{message::respond_to_command, queue::is_gte_max_queue_size};
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut response_embed = CreateEmbed::default();
@@ -62,6 +62,20 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     // Grab the active Call for the command's guild
     if let Some(call) = manager.get(guild_id) {
         let mut handler = call.lock().await;
+
+        // If the queue is already greater than max queue
+        // size, notify and don't continue
+        let queue_length = handler.queue().len() as u32;
+
+        if is_gte_max_queue_size(queue_length) {
+            response_embed
+                    .description("The queue is **full!**. The max queue size is restricted currently to conserve memory")
+                    .color(Color::DARK_RED);
+
+            respond_to_command(command, &ctx.http, response_embed).await;
+
+            return;
+        }
 
         // If url is a Youtube playlist
         if string_option.contains("/playlist") {
@@ -134,6 +148,10 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
                 handler.enqueue_source(source);
                 num_queued_songs += 1;
+
+                if is_gte_max_queue_size(queue_length + num_queued_songs) {
+                    break;
+                }
             }
 
             // Send response with number of queued songs
