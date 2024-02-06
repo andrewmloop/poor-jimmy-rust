@@ -31,8 +31,6 @@ The main objectives of this project are:
 
    Replace `YOUR_DISCORD_BOT_TOKEN` with your actual Discord bot token.
 
-2. Add an optional `MAX_QUEUE_SIZE` variable if you need to restrict queue size for memory constraints. If this variable is not supplied, the default number of 15 is used.
-
 ### Installation
 
 1. Clone the repository:
