@@ -17,22 +17,15 @@ use crate::utils::message::respond_to_command;
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut response_embed = CreateEmbed::default();
 
-    // Grab the value passed into the slash command
-    let command_option = command
-        .data
-        .options
-        .first()
-        .expect("Expected play command string option")
-        .resolved
-        .as_ref()
-        .expect("Expected play command string object");
+    // Grab the command option
+    let command_option = command.data.options.first();
 
-    // Validate the value is a string
-    let string_option = match command_option {
-        CommandDataOptionValue::String(option) => option.clone(),
-        _ => {
+    // Grab option name
+    let option_name = match command_option {
+        Some(option) => option.name.clone(),
+        None => {
             response_embed
-                .description("Please provide a valid Youtube URL")
+                .description("Provide a valid value to the **url** or **search** option!")
                 .color(Color::DARK_RED);
 
             respond_to_command(command, &ctx.http, response_embed).await;
@@ -41,8 +34,79 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         }
     };
 
+    // Grab the option value
+    let option_value = match command_option {
+        Some(option) => match option.resolved.as_ref() {
+            Some(data) => data,
+            None => {
+                response_embed
+                    .description("Provide a valid value to the **url** or **search** option!")
+                    .color(Color::DARK_RED);
+
+                respond_to_command(command, &ctx.http, response_embed).await;
+
+                return;
+            }
+        },
+        None => {
+            response_embed
+                .description("Provide a valid value to the **url** or **search** option!")
+                .color(Color::DARK_RED);
+
+            respond_to_command(command, &ctx.http, response_embed).await;
+
+            return;
+        }
+    };
+
+    // Validate the value is a string
+    let string_option = match option_value {
+        CommandDataOptionValue::String(option) => option.clone(),
+        _ => {
+            response_embed
+                .description("Please provide a valid Youtube URL or search!")
+                .color(Color::DARK_RED);
+
+            respond_to_command(command, &ctx.http, response_embed).await;
+
+            return;
+        }
+    };
+
+    // Branch command depending on command option
+    match option_name.as_str() {
+        "url" => play_url(&ctx, &command, string_option).await,
+        "search" => play_search(&ctx, &command, string_option).await,
+        _ => {
+            // This should never happen, log this to stderr
+            eprintln!("[ERROR] Unknown option given to play command {option_name}")
+        }
+    }
+}
+
+pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    command
+        .name("play")
+        .description("Play the audio from a Youtube video or playlist")
+        .create_option(|option| {
+            option
+                .name("url")
+                .description("A Youtube URL")
+                .kind(CommandOptionType::String)
+        })
+        .create_option(|option| {
+            option
+                .name("search")
+                .description("Search for a Youtube video by matching its title")
+                .kind(CommandOptionType::String)
+        })
+}
+
+async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: String) {
+    let mut response_embed = CreateEmbed::default();
+
     // Validate its a valid Youtube URL
-    if !string_option.contains("youtube.com") {
+    if !url.contains("youtube.com") {
         response_embed
             .description("Please provide a valid Youtube URL")
             .color(Color::DARK_RED);
@@ -64,10 +128,10 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         let mut handler = call.lock().await;
 
         // If url is a Youtube playlist
-        if string_option.contains("/playlist") {
+        if url.contains("/playlist") {
             // Use yt-dlp to produce json of all the individual videos
             let playlist_result = Command::new("yt-dlp")
-                .args(["-j", "--flat-playlist", &string_option])
+                .args(["-j", "--flat-playlist", &url])
                 .output()
                 .await;
 
@@ -152,7 +216,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .await;
 
             return;
-        } else if string_option.contains("/watch") {
+        } else if url.contains("/watch") {
             // If a song is currently playing, we'll add the new song to the queue
             let should_enqueue = match handler.queue().current() {
                 Some(_) => true,
@@ -160,7 +224,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             };
 
             // Get the audio source for the URL
-            let source_result = Restartable::ytdl(string_option, true).await;
+            let source_result = Restartable::ytdl(url, true).await;
 
             let source = match source_result {
                 Ok(source) => source,
@@ -191,7 +255,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .color(Color::DARK_GREEN);
         } else {
             response_embed
-                .description("Error playing song")
+                .description("Error parsing URL! Ensure its a valid Youtube URL")
                 .color(Color::DARK_RED);
         }
     } else {
@@ -205,17 +269,63 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     respond_to_command(command, &ctx.http, response_embed).await;
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command
-        .name("play")
-        .description("Play the audio from a Youtube video")
-        .create_option(|option| {
-            option
-                .name("url")
-                .description("A Youtube URL")
-                .kind(CommandOptionType::String)
-                .required(true)
-        })
+async fn play_search(ctx: &Context, command: &ApplicationCommandInteraction, search: String) {
+    let mut response_embed = CreateEmbed::default();
+
+    let manager = songbird::get(&ctx)
+        .await
+        .expect("Songbird Voice client placed in at initialization.");
+
+    let guild_id = command.guild_id.unwrap();
+
+    // Grab the active Call for the command's guild
+    if let Some(call) = manager.get(guild_id) {
+        let mut handler = call.lock().await;
+
+        let should_enqueue = match handler.queue().current() {
+            Some(_) => true,
+            None => false,
+        };
+
+        // Get the audio source for the URL
+        let source_result = Restartable::ytdl_search(search, true).await;
+
+        let source = match source_result {
+            Ok(source) => source,
+            Err(why) => {
+                println!("Error grabbing Youtube single video source: {why}");
+
+                response_embed
+                    .description("Error playing song")
+                    .color(Color::DARK_RED);
+
+                respond_to_command(command, &ctx.http, response_embed).await;
+
+                return;
+            }
+        };
+
+        // Play/enqueue song
+        let track = handler.enqueue_source(source.into());
+        let track_title = match &track.metadata().title {
+            Some(title) => title.clone(),
+            None => String::from("Song"),
+        };
+
+        let response_description = format_description(track_title, should_enqueue);
+
+        response_embed
+            .description(response_description)
+            .color(Color::DARK_GREEN);
+    } else {
+        response_embed
+            .description(
+                "Error playing song! Ensure Poor Jimmy is in a voice channel with **/join**",
+            )
+            .color(Color::DARK_RED);
+    }
+
+    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 fn format_description(source_title: String, should_enqueue: bool) -> String {
