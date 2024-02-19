@@ -106,7 +106,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
     let mut response_embed = CreateEmbed::default();
 
     // Validate its a valid Youtube URL
-    if !url.contains("youtube.com") {
+    if !url.contains("youtube.com") && !url.contains("youtu.be") {
         response_embed
             .description("Please provide a valid Youtube URL")
             .color(Color::DARK_RED);
@@ -216,7 +216,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
                 .await;
 
             return;
-        } else if url.contains("/watch") {
+        } else {
             // If a song is currently playing, we'll add the new song to the queue
             let should_enqueue = match handler.queue().current() {
                 Some(_) => true,
@@ -253,10 +253,6 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
             response_embed
                 .description(response_description)
                 .color(Color::DARK_GREEN);
-        } else {
-            response_embed
-                .description("Error parsing URL! Ensure its a valid Youtube URL")
-                .color(Color::DARK_RED);
         }
     } else {
         response_embed
