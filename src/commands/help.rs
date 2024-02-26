@@ -19,11 +19,13 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     \n**3. /join**Summon Poor Jimmy to your voice channel
     \n**4. /leave**Remove Poor Jimmy from the voice channel
     \n**5. /list**Display the current queue of songs
-    \n**6. /pause**Pause the currently playing song
-    \n**7. /ping**Respond with Pong!
-    \n**8. /play [url]**Play the audio from a Youtube video or playlist
-    \n**9. /resume**Resume the currently paused song
-    \n**10. /skip**Skip the currently playing song",
+    \n**6. /loop**Enable/disable looping of the current song
+    \n**7. /pause**Pause the currently playing song
+    \n**8. /ping**Respond with Pong!
+    \n**9a. /play [url]**Play the audio from a Youtube video or playlist URL
+    \n**9b. /play [title]**Play the audio from a Youtube video best matching the title
+    \n**10. /resume**Resume the currently paused song
+    \n**11. /skip**Skip the currently playing song",
     );
 
     response_embed

@@ -25,6 +25,7 @@ impl EventHandler for BotEventHandler {
                 "join" => commands::join::run(&ctx, &command).await,
                 "leave" => commands::leave::run(&ctx, &command).await,
                 "list" => commands::list::run(&ctx, &command).await,
+                "loop" => commands::r#loop::run(&ctx, &command).await,
                 "pause" => commands::pause::run(&ctx, &command).await,
                 "ping" => commands::ping::run(&ctx, &command).await,
                 "play" => commands::play::run(&ctx, &command).await,
@@ -52,6 +53,7 @@ impl EventHandler for BotEventHandler {
                 .create_application_command(|c| commands::join::register(c))
                 .create_application_command(|c| commands::leave::register(c))
                 .create_application_command(|c| commands::list::register(c))
+                .create_application_command(|c| commands::r#loop::register(c))
                 .create_application_command(|c| commands::pause::register(c))
                 .create_application_command(|c| commands::ping::register(c))
                 .create_application_command(|c| commands::play::register(c))
