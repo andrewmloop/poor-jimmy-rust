@@ -1,8 +1,9 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use serenity::{async_trait, http::Http, model::prelude::ChannelId, prelude::Mutex, utils::Color};
 
 use songbird::{Call, Event, EventContext, EventHandler as VoiceEventHandler};
+use tokio::time::sleep;
 
 pub struct TrackEndNotifier {
     pub channel_id: ChannelId,
@@ -24,6 +25,12 @@ impl VoiceEventHandler for TrackEndNotifier {
         let next_song = queue.first();
 
         drop(handler);
+
+        // Artificial delay added here before sending message notifying
+        // of the next song to play. Often times, this message is sent before
+        // the response from other commands making the messages appear
+        // out of order. This is a quick/dirty fix for that.
+        sleep(Duration::from_secs(2)).await;
 
         match next_song {
             // A song was found, notify that it will be playing next
