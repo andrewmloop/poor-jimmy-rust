@@ -25,7 +25,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         Some(option) => option.name.clone(),
         None => {
             response_embed
-                .description("Provide a valid value to the **url** or **search** option!")
+                .description("Provide a valid value to the **url** or **title** option!")
                 .color(Color::DARK_RED);
 
             respond_to_command(command, &ctx.http, response_embed).await;
@@ -40,7 +40,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             Some(data) => data,
             None => {
                 response_embed
-                    .description("Provide a valid value to the **url** or **search** option!")
+                    .description("Provide a valid value to the **url** or **title** option!")
                     .color(Color::DARK_RED);
 
                 respond_to_command(command, &ctx.http, response_embed).await;
@@ -50,7 +50,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         },
         None => {
             response_embed
-                .description("Provide a valid value to the **url** or **search** option!")
+                .description("Provide a valid value to the **url** or **title** option!")
                 .color(Color::DARK_RED);
 
             respond_to_command(command, &ctx.http, response_embed).await;
@@ -64,7 +64,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         CommandDataOptionValue::String(option) => option.clone(),
         _ => {
             response_embed
-                .description("Please provide a valid Youtube URL or search!")
+                .description("Please provide a valid Youtube URL or title!")
                 .color(Color::DARK_RED);
 
             respond_to_command(command, &ctx.http, response_embed).await;
@@ -76,7 +76,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     // Branch command depending on command option
     match option_name.as_str() {
         "url" => play_url(&ctx, &command, string_option).await,
-        "search" => play_search(&ctx, &command, string_option).await,
+        "title" => play_title(&ctx, &command, string_option).await,
         _ => {
             // This should never happen, log this to stderr
             eprintln!("[ERROR] Unknown option given to play command {option_name}")
@@ -96,8 +96,8 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
         })
         .create_option(|option| {
             option
-                .name("search")
-                .description("Search for a Youtube video by matching its title")
+                .name("title")
+                .description("Best matching title")
                 .kind(CommandOptionType::String)
         })
 }
@@ -265,7 +265,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
     respond_to_command(command, &ctx.http, response_embed).await;
 }
 
-async fn play_search(ctx: &Context, command: &ApplicationCommandInteraction, search: String) {
+async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, title: String) {
     let mut response_embed = CreateEmbed::default();
 
     let manager = songbird::get(&ctx)
@@ -284,7 +284,7 @@ async fn play_search(ctx: &Context, command: &ApplicationCommandInteraction, sea
         };
 
         // Get the audio source for the URL
-        let source_result = Restartable::ytdl_search(search, true).await;
+        let source_result = Restartable::ytdl_search(title, true).await;
 
         let source = match source_result {
             Ok(source) => source,
