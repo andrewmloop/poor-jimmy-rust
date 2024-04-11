@@ -3,9 +3,8 @@
 Poor Jimmy is a Discord music bot written in Rust. This project is a re-write of the [existing Poor Jimmy written with Typescript](https://github.com/andrewmloop/poor-jimmy). This Discord bot utilizes Serenity, a powerful and flexible library for interacting with the Discord API, the Songbird library for handling audio playback, and Tokio for an asychronous runtime.
 
 The main objectives of this project are:
-- Learn the Rust programming language
+- Get hands on experience with the Rust programming language
 - Explore containerization
-- Explore cloud hosting
 
 ## Dependencies
 
