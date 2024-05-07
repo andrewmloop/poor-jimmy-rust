@@ -7,7 +7,7 @@ use serenity::{
 use songbird::{Event, TrackEvent};
 
 use crate::handlers::track_end::TrackEndNotifier;
-use crate::utils::message::respond_to_command;
+use crate::utils::response::respond_to_command;
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     /*

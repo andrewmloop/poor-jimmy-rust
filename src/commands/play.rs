@@ -12,9 +12,13 @@ use serenity::{
 use songbird::input::Restartable;
 use tokio::process::Command;
 
-use crate::utils::message::respond_to_command;
+use crate::utils::response::respond_to_followup;
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
+    command.defer(&ctx.http).await.expect(
+        "Deferring a command response shouldn't fail. Possible change in API requirements/response",
+    );
+
     let mut response_embed = CreateEmbed::default();
 
     // Grab the command option
@@ -28,7 +32,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .description("Provide a valid value to the **url** or **title** option!")
                 .color(Color::DARK_RED);
 
-            respond_to_command(command, &ctx.http, response_embed).await;
+            respond_to_followup(command, &ctx.http, response_embed).await;
 
             return;
         }
@@ -43,7 +47,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                     .description("Provide a valid value to the **url** or **title** option!")
                     .color(Color::DARK_RED);
 
-                respond_to_command(command, &ctx.http, response_embed).await;
+                respond_to_followup(command, &ctx.http, response_embed).await;
 
                 return;
             }
@@ -53,7 +57,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .description("Provide a valid value to the **url** or **title** option!")
                 .color(Color::DARK_RED);
 
-            respond_to_command(command, &ctx.http, response_embed).await;
+            respond_to_followup(command, &ctx.http, response_embed).await;
 
             return;
         }
@@ -67,7 +71,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .description("Please provide a valid Youtube URL or title!")
                 .color(Color::DARK_RED);
 
-            respond_to_command(command, &ctx.http, response_embed).await;
+            respond_to_followup(command, &ctx.http, response_embed).await;
 
             return;
         }
@@ -111,7 +115,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
             .description("Please provide a valid Youtube URL")
             .color(Color::DARK_RED);
 
-        respond_to_command(command, &ctx.http, response_embed).await;
+        respond_to_followup(command, &ctx.http, response_embed).await;
 
         return;
     }
@@ -149,7 +153,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
                                 .description("Error queueing playlist")
                                 .color(Color::DARK_RED);
 
-                            respond_to_command(command, &ctx.http, response_embed).await;
+                            respond_to_followup(command, &ctx.http, response_embed).await;
 
                             return;
                         }
@@ -162,7 +166,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
                         .description("Error queueing playlist")
                         .color(Color::DARK_RED);
 
-                    respond_to_command(command, &ctx.http, response_embed).await;
+                    respond_to_followup(command, &ctx.http, response_embed).await;
 
                     return;
                 }
@@ -182,7 +186,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
                 .description("**Queueing** playlist. This may take some time. Some commands will be unavilable until completed.")
                 .color(Color::DARK_GREEN);
 
-            respond_to_command(command, &ctx.http, response_embed).await;
+            respond_to_followup(command, &ctx.http, response_embed).await;
 
             // Attempt to enqueue as many of the videos we can
             let mut num_queued_songs = 0;
@@ -235,7 +239,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
                         .description("Error playing song")
                         .color(Color::DARK_RED);
 
-                    respond_to_command(command, &ctx.http, response_embed).await;
+                    respond_to_followup(command, &ctx.http, response_embed).await;
 
                     return;
                 }
@@ -262,7 +266,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
             .color(Color::DARK_RED);
     }
 
-    respond_to_command(command, &ctx.http, response_embed).await;
+    respond_to_followup(command, &ctx.http, response_embed).await;
 }
 
 async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, title: String) {
@@ -295,7 +299,7 @@ async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, titl
                     .description("Error playing song")
                     .color(Color::DARK_RED);
 
-                respond_to_command(command, &ctx.http, response_embed).await;
+                respond_to_followup(command, &ctx.http, response_embed).await;
 
                 return;
             }
@@ -321,7 +325,7 @@ async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, titl
             .color(Color::DARK_RED);
     }
 
-    respond_to_command(command, &ctx.http, response_embed).await;
+    respond_to_followup(command, &ctx.http, response_embed).await;
 }
 
 fn format_description(source_title: String, should_enqueue: bool) -> String {
