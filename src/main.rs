@@ -13,11 +13,11 @@ use utils::map::HttpKey;
 
 #[tokio::main]
 async fn main() {
-    if let Err(why) = dotenv::dotenv() {
-        // .env file is not always needed. Log that one cannot be
-        // found and continue
-        println!("Error loading .env file: {why}");
-    }
+    // if let Err(why) = dotenv::dotenv() {
+    //     // .env file is not always needed. Log that one cannot be
+    //     // found and continue
+    //     println!("Error loading .env file: {why}");
+    // }
 
     // DISCORD_TOKEN is required. Bot will not work without it.
     let token = env::var("DISCORD_TOKEN").expect("DISCORD_TOKEN env variable was not set!");
