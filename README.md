@@ -4,6 +4,7 @@ Poor Jimmy is a Discord music bot written in Rust. This project is a re-write of
 
 The main objectives of this project are:
 - Get hands on experience with the Rust programming language
+- Explore concurrency
 - Explore containerization
 
 ## Dependencies
