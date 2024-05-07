@@ -26,10 +26,10 @@ The main objectives of this project are:
 1. Create a `.env` file in the project directory with the following content:
 
    ```bash
-   DISCORD_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
+   DISCORD_TOKEN=YOUR_DICORD_TOKEN
    ```
 
-   Replace `YOUR_DISCORD_BOT_TOKEN` with your actual Discord bot token.
+   Replace `YOUR_DISCORD_TOKEN` with your actual Discord bot token.
 
 ### Installation
 
@@ -49,15 +49,5 @@ The main objectives of this project are:
 3. Run the Docker container:
 
    ```bash
-   docker run -d --name poor-jimmy poor-jimmy
+   docker run --env-file ./.env poor-jimmy
    ```
-
-### Usage
-
-1. Start the Docker container:
-
-   ```bash
-   docker start poor-jimmy
-   ```
-
-2. Interact with your bot on Discord.

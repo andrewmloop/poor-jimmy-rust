@@ -8,6 +8,7 @@
 **/.classpath
 **/.dockerignore
 **/.git
+**/.env
 **/.gitignore
 **/.project
 **/.settings
