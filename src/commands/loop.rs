@@ -6,7 +6,7 @@ use serenity::{
 };
 use songbird::tracks::LoopState;
 
-use crate::utils::message::respond_to_command;
+use crate::utils::response::respond_to_command;
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut response_embed = CreateEmbed::default();

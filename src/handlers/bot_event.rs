@@ -7,7 +7,7 @@ use serenity::model::gateway::{Activity, Ready};
 use serenity::utils::Color;
 
 use crate::commands;
-use crate::utils::message::respond_to_command;
+use crate::utils::response::respond_to_command;
 
 /// The primary handler for the bot that handles all
 /// the events for the client
