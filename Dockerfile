@@ -23,7 +23,7 @@ COPY . .
 RUN cargo build --release
 
 # Final Image
-FROM alpine:3.19.1
+FROM alpine:3.20.2
 
 # Install dependencies to compile and run the bot
 RUN apk add --update \

@@ -51,3 +51,31 @@ The main objectives of this project are:
    ```bash
    docker run --env-file ./.env poor-jimmy
    ```
+
+### Deployment
+
+Poor Jimmy can be deployed as a container in any cloud environment. Poor Jimmy is currently hosted on a Heroku dyno. To deploy a new version:
+
+1. Build the bot for x86_64 (a Heroku requirement)
+   
+   ```bash
+   docker build --platform linux/amd64 -t poor-jimmy .
+   ```
+
+2. Tag the image with registry.heroku.com/{heroku_app}/{heroku_process_type}
+
+    ```bash
+    docker tag a052b961e1d4 registry.heroku.com/poor-jimmy/worker
+    ```
+
+3. Push the image to Heroku's registry
+
+    ```bash
+    docker push registry.heroku.com/poor-jimmy/worker
+    ```
+
+4. Release the new image to a container on your Heroku dyno
+
+    ```bash
+    heroku container:release worker --app poor-jimmy
+    ```
