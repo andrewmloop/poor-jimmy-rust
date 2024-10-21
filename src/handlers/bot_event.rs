@@ -28,7 +28,8 @@ impl EventHandler for BotEventHandler {
                 "loop" => commands::r#loop::run(&ctx, &command).await,
                 "pause" => commands::pause::run(&ctx, &command).await,
                 "ping" => commands::ping::run(&ctx, &command).await,
-                "play" => commands::play::run(&ctx, &command).await,
+                "play-title" => commands::play_title::run(&ctx, &command).await,
+                "play-url" => commands::play_url::run(&ctx, &command).await,
                 "skip" => commands::skip::run(&ctx, &command).await,
                 "resume" => commands::resume::run(&ctx, &command).await,
                 _ => {
@@ -56,7 +57,8 @@ impl EventHandler for BotEventHandler {
                 .create_application_command(|c| commands::r#loop::register(c))
                 .create_application_command(|c| commands::pause::register(c))
                 .create_application_command(|c| commands::ping::register(c))
-                .create_application_command(|c| commands::play::register(c))
+                .create_application_command(|c| commands::play_title::register(c))
+                .create_application_command(|c| commands::play_url::register(c))
                 .create_application_command(|c| commands::resume::register(c))
                 .create_application_command(|c| commands::skip::register(c))
         })

@@ -6,6 +6,7 @@ pub mod list;
 pub mod r#loop;
 pub mod pause;
 pub mod ping;
-pub mod play;
+pub mod play_title;
+pub mod play_url;
 pub mod resume;
 pub mod skip;

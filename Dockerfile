@@ -4,7 +4,7 @@ FROM rust:1.74-alpine AS builder
 RUN apk add --update \
     alpine-sdk \
     ffmpeg \
-    youtube-dl \
+    yt-dlp \
     pkgconfig \
     cmake \
     musl-dev \
@@ -29,7 +29,7 @@ FROM alpine:3.20.2
 RUN apk add --update \
     alpine-sdk \
     ffmpeg \
-    youtube-dl \
+    yt-dlp \
     pkgconfig \
     cmake \
     musl-dev \

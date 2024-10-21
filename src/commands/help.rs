@@ -22,8 +22,8 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     \n**6. /loop**Enable/disable looping of the current song
     \n**7. /pause**Pause the currently playing song
     \n**8. /ping**Respond with Pong!
-    \n**9. /play [url]**Play the audio from a Youtube video or playlist URL
-    \n**10. /play [title]**Play the audio from a Youtube video best matching the title
+    \n**9. /play-url**Play the audio from a Youtube video or playlist URL
+    \n**10. /play-title**Play the audio from a Youtube video best matching the given title
     \n**11. /resume**Resume the currently paused song
     \n**12. /skip**Skip the currently playing song",
     );
