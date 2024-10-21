@@ -2,9 +2,11 @@ use regex::Regex;
 use serenity::{
     builder::{CreateApplicationCommand, CreateEmbed},
     client::Context,
-    model::application::{
-        command::CommandOptionType,
-        interaction::application_command::{ApplicationCommandInteraction, CommandDataOptionValue},
+    model::{
+        application::interaction::application_command::{
+            ApplicationCommandInteraction, CommandDataOptionValue,
+        },
+        prelude::command::CommandOptionType,
     },
     utils::Color,
 };
@@ -21,88 +23,116 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
     let mut response_embed = CreateEmbed::default();
 
+    let command_value = command.data.options.first();
+
+    let resolved_value = match command_value {
+        Some(data) => data
+            .resolved
+            .as_ref()
+            .expect("Couldn't unwrap resolved slash command data"),
+        _ => {
+            response_embed
+                .description("Please provide a URL to play!")
+                .color(Color::DARK_RED);
+
+            respond_to_followup(command, &ctx.http, response_embed).await;
+
+            return;
+        }
+    };
+
+    let url = match resolved_value {
+        CommandDataOptionValue::String(value) => value.clone(),
+        _ => {
+            response_embed
+                .description("Please provide a valid URL!")
+                .color(Color::DARK_RED);
+
+            respond_to_followup(command, &ctx.http, response_embed).await;
+
+            return;
+        }
+    };
+
+    play_url(&ctx, &command, url).await;
+
     // Grab the command option
-    let command_option = command.data.options.first();
+    // let command_option = command.data.options.first();
 
-    // Grab option name
-    let option_name = match command_option {
-        Some(option) => option.name.clone(),
-        None => {
-            response_embed
-                .description("Provide a valid value to the **url** or **title** option!")
-                .color(Color::DARK_RED);
+    // // Grab option name
+    // let option_name = match command_option {
+    //     Some(option) => option.name.clone(),
+    //     None => {
+    //         response_embed
+    //             .description("Provide a valid value to the **url** or **title** option!")
+    //             .color(Color::DARK_RED);
 
-            respond_to_followup(command, &ctx.http, response_embed).await;
+    //         respond_to_followup(command, &ctx.http, response_embed).await;
 
-            return;
-        }
-    };
+    //         return;
+    //     }
+    // };
 
-    // Grab the option value
-    let option_value = match command_option {
-        Some(option) => match option.resolved.as_ref() {
-            Some(data) => data,
-            None => {
-                response_embed
-                    .description("Provide a valid value to the **url** or **title** option!")
-                    .color(Color::DARK_RED);
+    // // Grab the option value
+    // let option_value = match command_option {
+    //     Some(option) => match option.resolved.as_ref() {
+    //         Some(data) => data,
+    //         None => {
+    //             response_embed
+    //                 .description("Provide a valid value to the **url** or **title** option!")
+    //                 .color(Color::DARK_RED);
 
-                respond_to_followup(command, &ctx.http, response_embed).await;
+    //             respond_to_followup(command, &ctx.http, response_embed).await;
 
-                return;
-            }
-        },
-        None => {
-            response_embed
-                .description("Provide a valid value to the **url** or **title** option!")
-                .color(Color::DARK_RED);
+    //             return;
+    //         }
+    //     },
+    //     None => {
+    //         response_embed
+    //             .description("Provide a valid value to the **url** or **title** option!")
+    //             .color(Color::DARK_RED);
 
-            respond_to_followup(command, &ctx.http, response_embed).await;
+    //         respond_to_followup(command, &ctx.http, response_embed).await;
 
-            return;
-        }
-    };
+    //         return;
+    //     }
+    // };
 
-    // Validate the value is a string
-    let string_option = match option_value {
-        CommandDataOptionValue::String(option) => option.clone(),
-        _ => {
-            response_embed
-                .description("Please provide a valid Youtube URL or title!")
-                .color(Color::DARK_RED);
+    // // Validate the value is a string
+    // let string_option = match option_value {
+    //     CommandDataOptionValue::String(option) => option.clone(),
+    //     _ => {
+    //         response_embed
+    //             .description("Please provide a valid Youtube URL or title!")
+    //             .color(Color::DARK_RED);
 
-            respond_to_followup(command, &ctx.http, response_embed).await;
+    //         respond_to_followup(command, &ctx.http, response_embed).await;
 
-            return;
-        }
-    };
+    //         return;
+    //     }
+    // };
 
-    // Branch command depending on command option
-    match option_name.as_str() {
-        "url" => play_url(&ctx, &command, string_option).await,
-        "title" => play_title(&ctx, &command, string_option).await,
-        _ => {
-            // This should never happen, log this to stderr
-            eprintln!("[ERROR] Unknown option given to play command {option_name}")
-        }
-    }
+    // // Branch command depending on command option
+    // match option_name.as_str() {
+    //     "url" => play_url(&ctx, &command, string_option).await,
+    //     "title" => play_title(&ctx, &command, string_option).await,
+    //     _ => {
+    //         // This should never happen, log this to stderr
+    //         eprintln!("[ERROR] Unknown option given to play command {option_name}")
+    //     }
+    // }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
-        .name("play")
-        .description("Play the audio from a Youtube video or playlist")
+        .name("play-url")
+        .description("Play the audio from a Youtube video or playlist URL")
         .create_option(|option| {
             option
                 .name("url")
-                .description("A Youtube URL")
+                .description("A Youtube video/playlist URL")
                 .kind(CommandOptionType::String)
-        })
-        .create_option(|option| {
-            option
-                .name("title")
-                .description("Best matching title")
-                .kind(CommandOptionType::String)
+                .required(true)
         })
 }
 
@@ -269,64 +299,64 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
     respond_to_followup(command, &ctx.http, response_embed).await;
 }
 
-async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, title: String) {
-    let mut response_embed = CreateEmbed::default();
+// async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, title: String) {
+//     let mut response_embed = CreateEmbed::default();
 
-    let manager = songbird::get(&ctx)
-        .await
-        .expect("Songbird Voice client placed in at initialization.");
+//     let manager = songbird::get(&ctx)
+//         .await
+//         .expect("Songbird Voice client placed in at initialization.");
 
-    let guild_id = command.guild_id.unwrap();
+//     let guild_id = command.guild_id.unwrap();
 
-    // Grab the active Call for the command's guild
-    if let Some(call) = manager.get(guild_id) {
-        let mut handler = call.lock().await;
+//     // Grab the active Call for the command's guild
+//     if let Some(call) = manager.get(guild_id) {
+//         let mut handler = call.lock().await;
 
-        let should_enqueue = match handler.queue().current() {
-            Some(_) => true,
-            None => false,
-        };
+//         let should_enqueue = match handler.queue().current() {
+//             Some(_) => true,
+//             None => false,
+//         };
 
-        // Get the audio source for the URL
-        let source_result = Restartable::ytdl_search(title, true).await;
+//         // Get the audio source for the URL
+//         let source_result = Restartable::ytdl_search(title, true).await;
 
-        let source = match source_result {
-            Ok(source) => source,
-            Err(why) => {
-                println!("Error grabbing Youtube single video source: {why}");
+//         let source = match source_result {
+//             Ok(source) => source,
+//             Err(why) => {
+//                 println!("Error grabbing Youtube single video source: {why}");
 
-                response_embed
-                    .description("Error playing song")
-                    .color(Color::DARK_RED);
+//                 response_embed
+//                     .description("Error playing song")
+//                     .color(Color::DARK_RED);
 
-                respond_to_followup(command, &ctx.http, response_embed).await;
+//                 respond_to_followup(command, &ctx.http, response_embed).await;
 
-                return;
-            }
-        };
+//                 return;
+//             }
+//         };
 
-        // Play/enqueue song
-        let track = handler.enqueue_source(source.into());
-        let track_title = match &track.metadata().title {
-            Some(title) => title.clone(),
-            None => String::from("Song"),
-        };
+//         // Play/enqueue song
+//         let track = handler.enqueue_source(source.into());
+//         let track_title = match &track.metadata().title {
+//             Some(title) => title.clone(),
+//             None => String::from("Song"),
+//         };
 
-        let response_description = format_description(track_title, should_enqueue);
+//         let response_description = format_description(track_title, should_enqueue);
 
-        response_embed
-            .description(response_description)
-            .color(Color::DARK_GREEN);
-    } else {
-        response_embed
-            .description(
-                "Error playing song! Ensure Poor Jimmy is in a voice channel with **/join**",
-            )
-            .color(Color::DARK_RED);
-    }
+//         response_embed
+//             .description(response_description)
+//             .color(Color::DARK_GREEN);
+//     } else {
+//         response_embed
+//             .description(
+//                 "Error playing song! Ensure Poor Jimmy is in a voice channel with **/join**",
+//             )
+//             .color(Color::DARK_RED);
+//     }
 
-    respond_to_followup(command, &ctx.http, response_embed).await;
-}
+//     respond_to_followup(command, &ctx.http, response_embed).await;
+// }
 
 fn format_description(source_title: String, should_enqueue: bool) -> String {
     if should_enqueue {
