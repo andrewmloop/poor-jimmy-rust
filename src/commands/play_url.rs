@@ -55,72 +55,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     };
 
     play_url(&ctx, &command, url).await;
-
-    // Grab the command option
-    // let command_option = command.data.options.first();
-
-    // // Grab option name
-    // let option_name = match command_option {
-    //     Some(option) => option.name.clone(),
-    //     None => {
-    //         response_embed
-    //             .description("Provide a valid value to the **url** or **title** option!")
-    //             .color(Color::DARK_RED);
-
-    //         respond_to_followup(command, &ctx.http, response_embed).await;
-
-    //         return;
-    //     }
-    // };
-
-    // // Grab the option value
-    // let option_value = match command_option {
-    //     Some(option) => match option.resolved.as_ref() {
-    //         Some(data) => data,
-    //         None => {
-    //             response_embed
-    //                 .description("Provide a valid value to the **url** or **title** option!")
-    //                 .color(Color::DARK_RED);
-
-    //             respond_to_followup(command, &ctx.http, response_embed).await;
-
-    //             return;
-    //         }
-    //     },
-    //     None => {
-    //         response_embed
-    //             .description("Provide a valid value to the **url** or **title** option!")
-    //             .color(Color::DARK_RED);
-
-    //         respond_to_followup(command, &ctx.http, response_embed).await;
-
-    //         return;
-    //     }
-    // };
-
-    // // Validate the value is a string
-    // let string_option = match option_value {
-    //     CommandDataOptionValue::String(option) => option.clone(),
-    //     _ => {
-    //         response_embed
-    //             .description("Please provide a valid Youtube URL or title!")
-    //             .color(Color::DARK_RED);
-
-    //         respond_to_followup(command, &ctx.http, response_embed).await;
-
-    //         return;
-    //     }
-    // };
-
-    // // Branch command depending on command option
-    // match option_name.as_str() {
-    //     "url" => play_url(&ctx, &command, string_option).await,
-    //     "title" => play_title(&ctx, &command, string_option).await,
-    //     _ => {
-    //         // This should never happen, log this to stderr
-    //         eprintln!("[ERROR] Unknown option given to play command {option_name}")
-    //     }
-    // }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
@@ -140,9 +74,9 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
     let mut response_embed = CreateEmbed::default();
 
     // Validate its a valid Youtube URL
-    if !url.contains("youtube.com") && !url.contains("youtu.be") {
+    if !contains_youtube_domain(&url) || !contains_watch_endpoint(&url) {
         response_embed
-            .description("Please provide a valid Youtube URL")
+            .description("Please provide a valid Youtube URL. Valid URLs include **/watch** or **/playlist**")
             .color(Color::DARK_RED);
 
         respond_to_followup(command, &ctx.http, response_embed).await;
@@ -299,69 +233,61 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
     respond_to_followup(command, &ctx.http, response_embed).await;
 }
 
-// async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, title: String) {
-//     let mut response_embed = CreateEmbed::default();
-
-//     let manager = songbird::get(&ctx)
-//         .await
-//         .expect("Songbird Voice client placed in at initialization.");
-
-//     let guild_id = command.guild_id.unwrap();
-
-//     // Grab the active Call for the command's guild
-//     if let Some(call) = manager.get(guild_id) {
-//         let mut handler = call.lock().await;
-
-//         let should_enqueue = match handler.queue().current() {
-//             Some(_) => true,
-//             None => false,
-//         };
-
-//         // Get the audio source for the URL
-//         let source_result = Restartable::ytdl_search(title, true).await;
-
-//         let source = match source_result {
-//             Ok(source) => source,
-//             Err(why) => {
-//                 println!("Error grabbing Youtube single video source: {why}");
-
-//                 response_embed
-//                     .description("Error playing song")
-//                     .color(Color::DARK_RED);
-
-//                 respond_to_followup(command, &ctx.http, response_embed).await;
-
-//                 return;
-//             }
-//         };
-
-//         // Play/enqueue song
-//         let track = handler.enqueue_source(source.into());
-//         let track_title = match &track.metadata().title {
-//             Some(title) => title.clone(),
-//             None => String::from("Song"),
-//         };
-
-//         let response_description = format_description(track_title, should_enqueue);
-
-//         response_embed
-//             .description(response_description)
-//             .color(Color::DARK_GREEN);
-//     } else {
-//         response_embed
-//             .description(
-//                 "Error playing song! Ensure Poor Jimmy is in a voice channel with **/join**",
-//             )
-//             .color(Color::DARK_RED);
-//     }
-
-//     respond_to_followup(command, &ctx.http, response_embed).await;
-// }
-
 fn format_description(source_title: String, should_enqueue: bool) -> String {
     if should_enqueue {
         return format!("**Queued** {}!", source_title);
     } else {
         return format!("**Playing** {}!", source_title);
+    }
+}
+
+fn contains_youtube_domain(url: &String) -> bool {
+    url.contains("youtube.com") || url.contains("youtu.be")
+}
+
+fn contains_watch_endpoint(url: &String) -> bool {
+    url.contains("/watch") || url.contains("/playlist")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{contains_watch_endpoint, contains_youtube_domain, format_description};
+
+    #[test]
+    fn it_formats_description_queued() {
+        let title = String::from("Heat Waves");
+
+        let formatted = format_description(title.clone(), true);
+        assert_eq!(format!("**Queued** {}!", title), formatted);
+    }
+
+    #[test]
+    fn it_formats_description_playing() {
+        let title = String::from("Heat Waves");
+
+        let formatted = format_description(title.clone(), false);
+        assert_eq!(format!("**Playing** {}!", title), formatted);
+    }
+
+    #[test]
+    fn it_contains_youtube_domain() {
+        let valid_url = String::from("https://www.youtube.com/watch?id=12345");
+        let another_valid_url = String::from("https://www.youtu.be/watch?id=12345");
+        let invalid_url = String::from("https://www.you.tube.com/watch?id=12345");
+
+        assert_eq!(true, contains_youtube_domain(&valid_url));
+        assert_eq!(true, contains_youtube_domain(&another_valid_url));
+        assert_eq!(false, contains_youtube_domain(&invalid_url));
+    }
+
+    #[test]
+    fn it_contains_watch_endpoint() {
+        let watch_endpoint = String::from("https://www.youtube.com/watch?id=12345");
+        let playlist_endpoint = String::from("https://www.youtube.com/playlist?id=12345");
+        let invalid_endpoint = String::from("https://www.youtube.com/results?search_query=title");
+
+        assert_eq!(true, contains_watch_endpoint(&watch_endpoint));
+        assert_eq!(true, contains_watch_endpoint(&playlist_endpoint));
+        assert_eq!(false, contains_watch_endpoint(&invalid_endpoint));
     }
 }
