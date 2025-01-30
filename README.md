@@ -31,7 +31,7 @@ The main objectives of this project are:
 
    Replace `YOUR_DISCORD_TOKEN` with your actual Discord bot token.
 
-### Installation
+## Running Locally
 
 1. Clone the repository:
 
@@ -52,9 +52,53 @@ The main objectives of this project are:
    docker run --env-file ./.env poor-jimmy
    ```
 
-### Deployment
+## Deployment
 
-Poor Jimmy can be deployed as a container in any cloud environment. Poor Jimmy is currently hosted on a Heroku dyno. To deploy a new version:
+### Raspberry Pi
+
+Poor Jimmy is currently hosted on a Raspberry Pi. There are many ways to deploy to a device like a Raspberry Pi. The method this project uses includes setting up a Docker Hub repository.
+
+1. Build the bot
+
+    ```bash
+    docker build -t poor-jimmy .
+    ```
+2. Tag the bot's image with your Docker Hub username and repository
+
+    ```bash
+    docker image tag poor-jimmy <docker_hub_username>/<repository_name>
+    ```
+
+    Optionally, give the image a versioning tag. If a versioning tag is not included, a version of "latest" is given.
+
+    ```bash
+    docker image tag poor-jimmy <docker_hub_username>/<repository_name>:<version>
+    ```
+
+
+3. Push the image to Docker Hub with the tag created in the previous step
+
+    ```bash
+    docker push <docker_hub_username>/<repository_name>
+    ```
+
+4. SSH into the Raspberry Pi and pull the bot's image from Docker Hub. This step assumes Docker has been installed on the Raspberry Pi.
+
+    ```bash
+    docker pull <docker_hub_username>/<repository_name>
+    ```
+
+5. Start the container. This step assumes the .env file with the Discord secret is stored somewhere on the Raspberry Pi.
+
+    ```bash
+    cd /path/to/where/.env/file/lives
+
+    docker run --env-file ./.env <docker_hub_username>/<repository_name>
+    ```
+
+### Heroku
+
+Poor Jimmy can be deployed as a container in any cloud environment. Poor Jimmy can be hosted on a Heroku dyno. To deploy a new version:
 
 1. Build the bot for x86_64 (a Heroku requirement)
    
