@@ -74,7 +74,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
     let mut response_embed = CreateEmbed::default();
 
     // Validate its a valid Youtube URL
-    if !contains_youtube_domain(&url) || !contains_watch_endpoint(&url) {
+    if !is_valid_youtube_url(&url) {
         response_embed
             .description("Please provide a valid Youtube URL. Valid URLs include **/watch** or **/playlist**")
             .color(Color::DARK_RED);
@@ -241,17 +241,24 @@ fn format_description(source_title: String, should_enqueue: bool) -> String {
     }
 }
 
-fn contains_youtube_domain(url: &String) -> bool {
-    url.contains("youtube.com") || url.contains("youtu.be")
-}
+// fn contains_youtube_domain(url: &String) -> bool {
+//     url.contains("youtube.com") || url.contains("youtu.be")
+// }
 
-fn contains_watch_endpoint(url: &String) -> bool {
-    url.contains("/watch") || url.contains("/playlist")
+// fn contains_watch_endpoint(url: &String) -> bool {
+//     url.contains("/watch") || url.contains("/playlist")
+// }
+
+fn is_valid_youtube_url(url: &String) -> bool {
+    url.contains("youtu.be")
+        || (url.contains("youtube.com") && (url.contains("/watch") || url.contains("/playlist")))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{contains_watch_endpoint, contains_youtube_domain, format_description};
+    use crate::commands::play_url::is_valid_youtube_url;
+
+    use super::format_description;
 
     #[test]
     fn it_formats_description_queued() {
@@ -270,24 +277,40 @@ mod tests {
     }
 
     #[test]
-    fn it_contains_youtube_domain() {
-        let valid_url = String::from("https://www.youtube.com/watch?id=12345");
-        let another_valid_url = String::from("https://www.youtu.be/watch?id=12345");
-        let invalid_url = String::from("https://www.you.tube.com/watch?id=12345");
+    fn it_validates_valid_youtube_urls() {
+        let valid_watch_url = String::from("https://www.youtube.com/watch?id=12345");
+        let valid_share_url = String::from("https://youtu.be/e7qtC_e8Jxc?si=mtCnq8iVc253P89M");
+        let valid_playlist_url = String::from("https://www.youtube.com/playlist?id=12345");
 
-        assert_eq!(true, contains_youtube_domain(&valid_url));
-        assert_eq!(true, contains_youtube_domain(&another_valid_url));
-        assert_eq!(false, contains_youtube_domain(&invalid_url));
+        assert_eq!(true, is_valid_youtube_url(&valid_watch_url));
+        assert_eq!(true, is_valid_youtube_url(&valid_share_url));
+        assert_eq!(true, is_valid_youtube_url(&valid_playlist_url));
     }
 
     #[test]
-    fn it_contains_watch_endpoint() {
-        let watch_endpoint = String::from("https://www.youtube.com/watch?id=12345");
-        let playlist_endpoint = String::from("https://www.youtube.com/playlist?id=12345");
-        let invalid_endpoint = String::from("https://www.youtube.com/results?search_query=title");
+    fn it_validates_invalid_youtube_urls() {
+        let invalid_url = String::from("https://www.you.tube.com/watch?id=12345");
+        let another_invalid_url =
+            String::from("https://www.youtube.com/results?search_query=title");
 
-        assert_eq!(true, contains_watch_endpoint(&watch_endpoint));
-        assert_eq!(true, contains_watch_endpoint(&playlist_endpoint));
-        assert_eq!(false, contains_watch_endpoint(&invalid_endpoint));
+        assert_eq!(false, is_valid_youtube_url(&invalid_url));
+        assert_eq!(false, is_valid_youtube_url(&another_invalid_url));
     }
+
+    // #[test]
+    // fn it_contains_youtube_domain() {
+
+    //     assert_eq!(true, contains_youtube_domain(&valid_url));
+    //     assert_eq!(true, contains_youtube_domain(&another_valid_url));
+    //     assert_eq!(false, contains_youtube_domain(&invalid_url));
+    // }
+
+    // #[test]
+    // fn it_contains_watch_endpoint() {
+    //     let watch_endpoint = String::from("https://www.youtube.com/watch?id=12345");
+
+    //     assert_eq!(true, contains_watch_endpoint(&watch_endpoint));
+    //     assert_eq!(true, contains_watch_endpoint(&playlist_endpoint));
+    //     assert_eq!(false, contains_watch_endpoint(&invalid_endpoint));
+    // }
 }
