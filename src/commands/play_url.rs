@@ -241,14 +241,6 @@ fn format_description(source_title: String, should_enqueue: bool) -> String {
     }
 }
 
-// fn contains_youtube_domain(url: &String) -> bool {
-//     url.contains("youtube.com") || url.contains("youtu.be")
-// }
-
-// fn contains_watch_endpoint(url: &String) -> bool {
-//     url.contains("/watch") || url.contains("/playlist")
-// }
-
 fn is_valid_youtube_url(url: &String) -> bool {
     url.contains("youtu.be")
         || (url.contains("youtube.com") && (url.contains("/watch") || url.contains("/playlist")))
@@ -296,21 +288,4 @@ mod tests {
         assert_eq!(false, is_valid_youtube_url(&invalid_url));
         assert_eq!(false, is_valid_youtube_url(&another_invalid_url));
     }
-
-    // #[test]
-    // fn it_contains_youtube_domain() {
-
-    //     assert_eq!(true, contains_youtube_domain(&valid_url));
-    //     assert_eq!(true, contains_youtube_domain(&another_valid_url));
-    //     assert_eq!(false, contains_youtube_domain(&invalid_url));
-    // }
-
-    // #[test]
-    // fn it_contains_watch_endpoint() {
-    //     let watch_endpoint = String::from("https://www.youtube.com/watch?id=12345");
-
-    //     assert_eq!(true, contains_watch_endpoint(&watch_endpoint));
-    //     assert_eq!(true, contains_watch_endpoint(&playlist_endpoint));
-    //     assert_eq!(false, contains_watch_endpoint(&invalid_endpoint));
-    // }
 }
