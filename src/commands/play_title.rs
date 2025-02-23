@@ -15,7 +15,7 @@ use crate::utils::response::respond_to_followup;
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     command.defer(&ctx.http).await.expect(
-        "Deferringa  command response shouldn't fail. Possible change in API requirements/response",
+        "Deferring a command response shouldn't fail. Possible change in API requirements/response",
     );
 
     let mut response_embed = CreateEmbed::default();
