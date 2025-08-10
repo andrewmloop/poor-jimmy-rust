@@ -1,15 +1,11 @@
 use serenity::{
-    builder::{CreateApplicationCommand, CreateEmbed},
-    client::Context,
+    builder::CreateApplicationCommand, client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
-    utils::Color,
 };
 
 use crate::utils::response::respond_to_command;
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
-    let mut response_embed = CreateEmbed::default();
-
     let help_description = String::from(
         "
     ## 🎶 Poor Jimmy Commands 🎶
@@ -28,11 +24,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     \n**12. /skip**Skip the currently playing song",
     );
 
-    response_embed
-        .description(help_description)
-        .color(Color::DARK_GREEN);
-
-    respond_to_command(command, &ctx.http, response_embed).await;
+    respond_to_command(command, &ctx.http, help_description, false).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
