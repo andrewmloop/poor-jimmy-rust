@@ -1,5 +1,5 @@
 ### Builder Image ###
-FROM rust:1.74-alpine AS builder
+FROM rust:1.82-alpine AS builder
 
 # Install dependencies
 RUN apk add --update \
@@ -27,7 +27,7 @@ RUN cargo build --release
 ### Final Image ###
 # This final image is what is ultimately shipped. It just has the bot's binary
 # and all the dependencies it needs. We leave behind all the build tools.
-FROM alpine:3.20.2
+FROM alpine:latest
 
 # Install dependencies to run the bot
 RUN apk add --update \

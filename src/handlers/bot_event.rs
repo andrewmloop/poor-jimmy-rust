@@ -1,13 +1,11 @@
 use serenity::async_trait;
-use serenity::builder::CreateEmbed;
 use serenity::client::{Context, EventHandler};
 use serenity::model::application::command::Command;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::gateway::{Activity, Ready};
-use serenity::utils::Color;
 
 use crate::commands;
-use crate::utils::response::respond_to_command;
+use crate::utils::response::{respond_to_error, respond_to_error_button};
 
 /// The primary handler for the bot that handles all
 /// the events for the client
@@ -33,14 +31,22 @@ impl EventHandler for BotEventHandler {
                 "skip" => commands::skip::run(&ctx, &command).await,
                 "resume" => commands::resume::run(&ctx, &command).await,
                 _ => {
-                    let mut response_embed = CreateEmbed::default();
-                    response_embed
-                        .description("Unknown command!")
-                        .color(Color::DARK_RED);
-
-                    respond_to_command(&command, &ctx.http, response_embed).await;
+                    respond_to_error(&command, &ctx.http, format!("Unknown command!")).await;
                 }
             };
+        } else if let Interaction::MessageComponent(command) = interaction {
+            let button_id = command.data.custom_id.as_str();
+
+            match button_id {
+                "clear" => commands::clear::handle_button(&ctx, &command).await,
+                "loop" => commands::r#loop::handle_button(&ctx, &command).await,
+                "pause" => commands::pause::handle_button(&ctx, &command).await,
+                "resume" => commands::resume::handle_button(&ctx, &command).await,
+                "skip" => commands::skip::handle_button(&ctx, &command).await,
+                _ => {
+                    respond_to_error_button(&command, &ctx.http, format!("Unknown command!")).await;
+                }
+            }
         }
     }
 

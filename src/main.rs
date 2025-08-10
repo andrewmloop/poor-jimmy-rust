@@ -1,4 +1,5 @@
 mod commands;
+mod components;
 mod handlers;
 mod utils;
 
@@ -9,7 +10,7 @@ use reqwest::Client as HttpClient;
 use serenity::client::ClientBuilder;
 use serenity::prelude::*;
 use songbird::SerenityInit;
-use utils::map::HttpKey;
+use utils::type_map::HttpKey;
 
 #[tokio::main]
 async fn main() {

@@ -5,6 +5,8 @@ use serenity::{async_trait, http::Http, model::prelude::ChannelId, prelude::Mute
 use songbird::{Call, Event, EventContext, EventHandler as VoiceEventHandler};
 use tokio::time::sleep;
 
+use crate::components::music_buttons::create_music_buttons;
+
 pub struct TrackEndNotifier {
     pub channel_id: ChannelId,
     pub http: Arc<Http>,
@@ -36,17 +38,26 @@ impl VoiceEventHandler for TrackEndNotifier {
             // A song was found, notify that it will be playing next
             Some(song) => {
                 let title = &song.metadata().title;
+                let thumbnail = &song.metadata().thumbnail;
 
                 match title {
                     Some(title) => {
                         let _ = self
                             .channel_id
                             .send_message(&self.http, |message| {
-                                message.add_embed(|embed| {
-                                    embed
-                                        .description(format!("**Now playing:** {}!", title))
-                                        .color(Color::DARK_GREEN)
-                                })
+                                message
+                                    .add_embed(|embed| {
+                                        embed
+                                            .description(format!("**Now playing:** {}!", title))
+                                            .color(Color::DARK_GREEN);
+
+                                        if let Some(url) = thumbnail {
+                                            embed.image(url);
+                                        }
+
+                                        embed
+                                    })
+                                    .set_components(create_music_buttons())
                             })
                             .await;
                     }
@@ -54,11 +65,13 @@ impl VoiceEventHandler for TrackEndNotifier {
                         let _ = self
                             .channel_id
                             .send_message(&self.http, |message| {
-                                message.add_embed(|embed| {
-                                    embed
-                                        .description("**Now playing:** Mystery song!")
-                                        .color(Color::DARK_GREEN)
-                                })
+                                message
+                                    .add_embed(|embed| {
+                                        embed
+                                            .description("**Now playing:** Mystery song!")
+                                            .color(Color::DARK_GREEN)
+                                    })
+                                    .set_components(create_music_buttons())
                             })
                             .await;
                     }

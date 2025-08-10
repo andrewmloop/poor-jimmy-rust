@@ -1,12 +1,9 @@
 [package]
 name = "poor-jimmy"
-version = "0.1.0"
+version = "1.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-regex = "1.10.3"
 reqwest = "0.11.24"
 
 [dependencies.songbird]
@@ -15,7 +12,7 @@ features = ["builtin-queue", "yt-dlp"]
 
 [dependencies.serenity]
 version = "0.11.7"
-default_features = false
+default-features = false
 features = [
   "builder",
   "cache",

@@ -1,26 +1,13 @@
-use serenity::builder::CreateEmbed;
 use serenity::{
     builder::CreateApplicationCommand, client::Context,
     model::application::interaction::application_command::ApplicationCommandInteraction,
-    utils::Color,
 };
 use songbird::{Event, TrackEvent};
 
 use crate::handlers::track_end::TrackEndNotifier;
-use crate::utils::response::respond_to_command;
+use crate::utils::response::{respond_to_command, respond_to_error};
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
-    /*
-       1. Grab guild_id and voice_channel_id from context/command
-       2. Grab the songbird manager
-       3. Use the manager to connect to the voice channel
-       4. Update the handler with any global event handlers we may need
-       5. Return a "Poor Jimmy has joined the voice chat" on success
-       6. Return a "You're not in a voice channel, if one cannot be found"
-       7. Return a "Error joining the voice channel for all other errors"
-    */
-    let mut response_embed = CreateEmbed::default();
-
     let guild_id = command.guild_id.unwrap();
     let user_id = {
         let member = command.member.as_ref().unwrap();
@@ -31,13 +18,9 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         let guild = match ctx.cache.guild(guild_id) {
             Some(guild) => guild,
             None => {
-                println!("Error finding guild in cache");
-                println!("{:?}", ctx.cache);
-                response_embed
-                    .description(String::from("Error joining voice channel"))
-                    .color(Color::DARK_RED);
+                println!("Error finding guild in cache: {:?}", ctx.cache);
 
-                respond_to_command(command, &ctx.http, response_embed).await;
+                respond_to_error(command, &ctx.http, format!("Error joining voice channel")).await;
 
                 return;
             }
@@ -54,11 +37,12 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let connect_to = match voice_channel_id {
         Some(channel) => channel,
         None => {
-            response_embed
-                .description("You're not in a voice channel!")
-                .color(Color::DARK_RED);
-
-            respond_to_command(command, &ctx.http, response_embed).await;
+            respond_to_error(
+                command,
+                &ctx.http,
+                format!("You're not in a voice channel!"),
+            )
+            .await;
 
             return;
         }
@@ -84,16 +68,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             },
         );
 
-        response_embed
-            .description(String::from("Poor Jimmy **joined** the voice channel!"))
-            .color(Color::DARK_GREEN);
+        respond_to_command(
+            command,
+            &ctx.http,
+            format!("Poor Jimmy **joined** the voice channel!"),
+            false,
+        )
+        .await;
     } else {
-        response_embed
-            .description("Error joining voice channel!")
-            .color(Color::DARK_RED);
+        respond_to_error(command, &ctx.http, format!("Error joining voice channel!")).await;
     }
-
-    respond_to_command(command, &ctx.http, response_embed).await;
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

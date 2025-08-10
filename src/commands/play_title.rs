@@ -94,7 +94,7 @@ async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, titl
                 println!("Error grabbing Youtube single video source: {why}");
 
                 response_embed
-                    .description("Error playing song")
+                    .description("Error playing song!")
                     .color(Color::DARK_RED);
 
                 respond_to_followup(command, &ctx.http, response_embed).await;
@@ -109,12 +109,19 @@ async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, titl
             Some(title) => title.clone(),
             None => String::from("Song"),
         };
+        let track_thumbnail = &track.metadata().thumbnail;
 
         let response_description = format_description(track_title, should_enqueue);
 
         response_embed
             .description(response_description)
             .color(Color::DARK_GREEN);
+
+        if !should_enqueue {
+            if let Some(url) = track_thumbnail {
+                response_embed.image(url);
+            }
+        }
     } else {
         response_embed
             .description(
