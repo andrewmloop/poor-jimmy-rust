@@ -32,7 +32,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .description("Please provide a title to search!")
                 .color(Color::DARK_RED);
 
-            respond_to_followup(command, &ctx.http, response_embed).await;
+            respond_to_followup(command, &ctx.http, response_embed, false).await;
 
             return;
         }
@@ -45,7 +45,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .description("Please provide a valid title!")
                 .color(Color::DARK_RED);
 
-            respond_to_followup(command, &ctx.http, response_embed).await;
+            respond_to_followup(command, &ctx.http, response_embed, false).await;
 
             return;
         }
@@ -97,7 +97,7 @@ async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, titl
                     .description("Error playing song!")
                     .color(Color::DARK_RED);
 
-                respond_to_followup(command, &ctx.http, response_embed).await;
+                respond_to_followup(command, &ctx.http, response_embed, false).await;
 
                 return;
             }
@@ -122,15 +122,17 @@ async fn play_title(ctx: &Context, command: &ApplicationCommandInteraction, titl
                 response_embed.image(url);
             }
         }
+
+        respond_to_followup(command, &ctx.http, response_embed, true).await;
     } else {
         response_embed
             .description(
                 "Error playing song! Ensure Poor Jimmy is in a voice channel with **/join**",
             )
             .color(Color::DARK_RED);
-    }
 
-    respond_to_followup(command, &ctx.http, response_embed).await;
+        respond_to_followup(command, &ctx.http, response_embed, false).await;
+    }
 }
 
 fn format_description(source_title: String, should_enqueue: bool) -> String {

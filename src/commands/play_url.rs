@@ -33,7 +33,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .description("Please provide a URL to play!")
                 .color(Color::DARK_RED);
 
-            respond_to_followup(command, &ctx.http, response_embed).await;
+            respond_to_followup(command, &ctx.http, response_embed, false).await;
 
             return;
         }
@@ -46,7 +46,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .description("Please provide a valid URL!")
                 .color(Color::DARK_RED);
 
-            respond_to_followup(command, &ctx.http, response_embed).await;
+            respond_to_followup(command, &ctx.http, response_embed, false).await;
 
             return;
         }
@@ -77,7 +77,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
             .description("Please provide a valid **/watch** Youtube URL")
             .color(Color::DARK_RED);
 
-        respond_to_followup(command, &ctx.http, response_embed).await;
+        respond_to_followup(command, &ctx.http, response_embed, false).await;
 
         return;
     }
@@ -111,7 +111,7 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
                     .description("Error playing song")
                     .color(Color::DARK_RED);
 
-                respond_to_followup(command, &ctx.http, response_embed).await;
+                respond_to_followup(command, &ctx.http, response_embed, false).await;
 
                 return;
             }
@@ -136,15 +136,17 @@ async fn play_url(ctx: &Context, command: &ApplicationCommandInteraction, url: S
                 response_embed.image(url);
             }
         }
+
+        respond_to_followup(command, &ctx.http, response_embed, true).await;
     } else {
         response_embed
             .description(
                 "Error playing song! Ensure Poor Jimmy is in a voice channel with **/join**",
             )
             .color(Color::DARK_RED);
-    }
 
-    respond_to_followup(command, &ctx.http, response_embed).await;
+        respond_to_followup(command, &ctx.http, response_embed, false).await;
+    }
 }
 
 fn format_description(source_title: String, should_enqueue: bool) -> String {

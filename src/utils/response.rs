@@ -113,9 +113,18 @@ pub async fn respond_to_followup(
     command: &ApplicationCommandInteraction,
     http: &Http,
     content: CreateEmbed,
+    include_buttons: bool,
 ) {
     command
-        .create_followup_message(http, |response| response.set_embed(content))
+        .create_followup_message(http, |response| {
+            response.set_embed(content);
+
+            if include_buttons {
+                response.set_components(create_music_buttons());
+            }
+
+            response
+        })
         .await
         .expect("Sending a command response followup shouldn't fail. Possible change in API requirements/response");
 }
